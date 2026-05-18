@@ -1,0 +1,123 @@
+.invoice-preview {
+  display: none;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .invoice-preview,
+  .invoice-preview * {
+    visibility: visible;
+  }
+
+  .invoice-preview {
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 20px;
+    background: white;
+    color: #1a1a18;
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  .invoice-header {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .shop-name {
+    font-size: 28px;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0;
+    letter-spacing: 1px;
+  }
+
+  .shop-subtitle {
+    font-size: 12px;
+    color: #64748b;
+    margin: 4px 0 0 0;
+  }
+
+  .invoice-divider {
+    border-bottom: 2px solid #0f172a;
+    margin: 15px 0;
+  }
+
+  .invoice-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #0f172a;
+  }
+
+  .invoice-date {
+    font-weight: 500;
+  }
+
+  .invoice-customer {
+    color: #64748b;
+  }
+
+  .invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+    font-size: 12px;
+  }
+
+  .invoice-table th {
+    background: #f8fafc;
+    padding: 10px 8px;
+    text-align: left;
+    border-bottom: 2px solid #e2e8f0;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    color: #64748b;
+  }
+
+  .invoice-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .invoice-table th:last-child,
+  .invoice-table td:last-child {
+    text-align: right;
+  }
+
+  .invoice-total {
+    text-align: right;
+    font-size: 20px;
+    font-weight: 600;
+    color: #0f172a;
+    padding: 15px 0;
+  }
+
+  .invoice-footer {
+    text-align: center;
+    font-size: 12px;
+    font-style: italic;
+    color: #64748b;
+    margin-top: 20px;
+  }
+}
+
+/* Screen-only styling for preview (optional) */
+@media screen {
+  .invoice-preview {
+    background: white;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px;
+    border: 1px solid #e2e0db;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+}
