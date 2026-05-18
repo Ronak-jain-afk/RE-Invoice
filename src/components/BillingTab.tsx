@@ -627,10 +627,8 @@ export default function BillingTab() {
         </div>
       </div>
 
-      {/* Invoice Preview (hidden, visible during print) */}
-      <div style={{ display: "none" }}>
-        <InvoicePreview cart={cart} date={date} customerName={customerName} customerMobile={customerMobile} globalDiscount={globalDiscount} getEffectiveDiscount={getEffectiveDiscount} />
-      </div>
+      {/* Invoice Preview (hidden by CSS, visible during print) */}
+      <InvoicePreview cart={cart} date={date} customerName={customerName} customerMobile={customerMobile} globalDiscount={globalDiscount} getEffectiveDiscount={getEffectiveDiscount} />
     </div>
   );
 }
