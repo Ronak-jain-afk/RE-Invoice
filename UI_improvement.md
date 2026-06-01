@@ -56,4 +56,5 @@ A persistent **Top Header** was introduced to provide clear context and organiza
 - **Motion**: Integrated subtle exponential ease-out curves for hover transitions and modal reveals.
 
 ---
+
 *Redesign completed on June 1, 2026.*
