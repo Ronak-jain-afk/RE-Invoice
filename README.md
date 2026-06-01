@@ -24,6 +24,12 @@ Desktop app for inventory management, billing, and invoice generation at **Ronak
 - **Invoice numbering** — Auto-incrementing sequential numbers, persisted in DB
 - **Offline-first** — Zero backend, zero cloud, fully local
 
+## Screenshots
+
+| Billing | Inventory | Settings |
+|---------|-----------|----------|
+| ![Billing tab](demo-img/demo_billing.png) | ![Inventory tab](demo-img/demo_inventory.png) | ![Settings tab](demo-img/demo_settings.png) |
+
 ## Quick start
 
 ```bash
