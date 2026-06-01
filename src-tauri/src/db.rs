@@ -176,7 +176,7 @@ impl Database {
             )?;
 
             let bv_id: i64 = conn.query_row(
-                "SELECT id FROM brand_variants WHERE base_id = ?1 AND brand_id = ?2",
+                "SELECT id FROM brand_variants WHERE base_id = ?1 AND brand_id IS ?2",
                 rusqlite::params![base_id, brand_id],
                 |row| row.get(0),
             )?;

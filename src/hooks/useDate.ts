@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import dayjs from "dayjs";
 
 export function useDate() {
   const [date, setDate] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
+  const fetchedRef = useRef(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -14,14 +15,13 @@ export function useDate() {
       .then((data) => {
         if (data.datetime) {
           setDate(dayjs(data.datetime).format("YYYY-MM-DD"));
+          fetchedRef.current = true;
         }
       })
-      .catch(() => {
-        // fallback to system clock
-      })
+      .catch(() => {})
       .finally(() => {
         clearTimeout(timeout);
-        if (!date) {
+        if (!fetchedRef.current) {
           setDate(dayjs().format("YYYY-MM-DD"));
         }
         setIsLoading(false);

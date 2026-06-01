@@ -136,7 +136,7 @@ export default function BillingTab() {
         showToast(`PDF (${size}) downloaded`);
       }
     } catch (e) {
-      showToast("PDF generation failed", "error");
+      showToast(`PDF generation failed: ${e}`, "error");
     } finally {
       setPdfLoading(false);
     }
