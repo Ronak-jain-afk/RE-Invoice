@@ -1,8 +1,10 @@
 use rusqlite::{Connection, Result as SqliteResult};
+use std::path::PathBuf;
 use std::sync::Mutex;
 
 pub struct Database {
     pub conn: Mutex<Connection>,
+    pub path: PathBuf,
 }
 
 impl Database {
@@ -10,16 +12,34 @@ impl Database {
         let conn = Connection::open(path)?;
         Ok(Self {
             conn: Mutex::new(conn),
+            path: PathBuf::from(path),
         })
     }
 
     pub fn init(&self) -> SqliteResult<()> {
+        self.init_invoice_counter()?;
         self.init_brands_table()?;
         self.init_item_bases_table()?;
         self.init_brand_variants_table()?;
         self.init_sub_model_variants_table()?;
         self.init_fts()?;
         self.migrate_old_items()?;
+        Ok(())
+    }
+
+    fn init_invoice_counter(&self) -> SqliteResult<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS invoice_counter (
+                id INTEGER PRIMARY KEY CHECK(id = 1),
+                next_number INTEGER NOT NULL DEFAULT 1
+            )",
+            [],
+        )?;
+        conn.execute(
+            "INSERT OR IGNORE INTO invoice_counter (id, next_number) VALUES (1, 1)",
+            [],
+        )?;
         Ok(())
     }
 
@@ -588,4 +608,89 @@ pub fn get_product_details(
     }
 
     Ok(result)
+}
+
+#[tauri::command]
+pub fn backup_database(db: tauri::State<Database>, destPath: String) -> Result<(), String> {
+    use std::fs;
+    let db_path = db.path.clone();
+    let conn = db.conn.lock().map_err(|e| e.to_string())?;
+    conn.execute("BEGIN IMMEDIATE", []).map_err(|e| e.to_string())?;
+    conn.execute("ROLLBACK", []).map_err(|e| e.to_string())?;
+    drop(conn);
+    fs::copy(&db_path, &destPath).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn restore_database(db: tauri::State<Database>, srcPath: String) -> Result<(), String> {
+    use std::fs;
+    let db_path = db.path.clone();
+
+    // 1. Replace current connection with a temporary in-memory one (drops the old)
+    let temp_conn = Connection::open_in_memory().map_err(|e| e.to_string())?;
+    {
+        let mut conn = db.conn.lock().map_err(|e| e.to_string())?;
+        *conn = temp_conn;
+    }
+
+    // 2. Copy backup over the current DB file
+    fs::copy(&srcPath, &db_path).map_err(|e| e.to_string())?;
+
+    // 3. Reopen connection to the restored DB
+    let new_conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
+    {
+        let mut conn = db.conn.lock().map_err(|e| e.to_string())?;
+        *conn = new_conn;
+    }
+
+    // 4. Re-init schema (CREATE TABLE IF NOT EXISTS + FTS rebuild)
+    db.init().map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn claim_invoice_number(db: tauri::State<Database>) -> Result<i64, String> {
+    let conn = db.conn.lock().map_err(|e| e.to_string())?;
+    let number: i64 = conn
+        .query_row(
+            "UPDATE invoice_counter SET next_number = next_number + 1 RETURNING next_number - 1",
+            [],
+            |row| row.get(0),
+        )
+        .map_err(|e| e.to_string())?;
+    Ok(number)
+}
+
+#[tauri::command]
+pub fn suggest_item_bases(
+    db: tauri::State<Database>,
+    query: String,
+) -> Result<Vec<Brand>, String> {
+    if query.trim().is_empty() {
+        return Ok(vec![]);
+    }
+
+    let conn = db.conn.lock().map_err(|e| e.to_string())?;
+    let search_pattern = format!("%{}%", query.replace('%', "\\%").replace('_', "\\_"));
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, name FROM item_bases WHERE name LIKE ?1 ESCAPE '\\' ORDER BY name LIMIT 10",
+        )
+        .map_err(|e| e.to_string())?;
+
+    let results = stmt
+        .query_map([&search_pattern], |row| {
+            Ok(Brand {
+                id: row.get(0)?,
+                name: row.get(1)?,
+            })
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+
+    Ok(results)
 }

@@ -63,6 +63,13 @@ export function useItems() {
   const getProductDetails = (baseId: number) =>
     invoke<BrandVariant[]>("get_product_details", { baseId });
 
+  const suggestItemBases = (query: string) =>
+    invoke<Brand[]>("suggest_item_bases", { query });
+
+  const claimInvoiceNumber = () => invoke<number>("claim_invoice_number");
+  const backupDatabase = (destPath: string) => invoke<void>("backup_database", { destPath });
+  const restoreDatabase = (srcPath: string) => invoke<void>("restore_database", { srcPath });
+
   return {
     getBrands,
     addBrand,
@@ -75,5 +82,9 @@ export function useItems() {
     deleteSubModel,
     searchItems,
     getProductDetails,
+    suggestItemBases,
+    claimInvoiceNumber,
+    backupDatabase,
+    restoreDatabase,
   };
 }

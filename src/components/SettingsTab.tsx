@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
 import { useToast } from "../hooks/useToast.tsx";
+import { useItems } from "../hooks/useItems";
 
 export default function SettingsTab() {
   const { showToast } = useToast();
+  const { backupDatabase, restoreDatabase } = useItems();
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [pdfPath, setPdfPath] = useState("");
+  const [backupPath, setBackupPath] = useState("");
+  const [restorePath, setRestorePath] = useState("");
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
@@ -73,6 +77,65 @@ export default function SettingsTab() {
             <button onClick={handleSavePdfPath} style={primaryButton}>
               Save Path
             </button>
+          </div>
+        </div>
+
+        <div style={card}>
+          <h3 style={cardTitle}>Data Management</h3>
+          <p style={description}>
+            Backup your database to a safe location, or restore from a previous backup.
+            Restore will replace all current data.
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+            <div style={inputRow}>
+              <input
+                type="text"
+                placeholder="/home/user/backups/ronak_backup.db"
+                value={backupPath}
+                onChange={(e) => setBackupPath(e.target.value)}
+                style={input}
+              />
+              <button
+                onClick={async () => {
+                  if (!backupPath.trim()) { showToast("Enter a backup path", "error"); return; }
+                  try {
+                    await backupDatabase(backupPath.trim());
+                    showToast("Backup saved successfully");
+                  } catch (e) {
+                    showToast(`Backup failed: ${e}`, "error");
+                  }
+                }}
+                style={primaryButton}
+              >
+                Backup
+              </button>
+            </div>
+
+            <div style={inputRow}>
+              <input
+                type="text"
+                placeholder="/home/user/backups/ronak_backup.db"
+                value={restorePath}
+                onChange={(e) => setRestorePath(e.target.value)}
+                style={input}
+              />
+              <button
+                onClick={async () => {
+                  if (!restorePath.trim()) { showToast("Enter a restore path", "error"); return; }
+                  if (!confirm("Restore will replace ALL current data. Are you sure?")) return;
+                  try {
+                    await restoreDatabase(restorePath.trim());
+                    showToast("Database restored successfully");
+                  } catch (e) {
+                    showToast(`Restore failed: ${e}`, "error");
+                  }
+                }}
+                style={{ ...primaryButton, background: "var(--color-error)" }}
+              >
+                Restore
+              </button>
+            </div>
           </div>
         </div>
       </div>

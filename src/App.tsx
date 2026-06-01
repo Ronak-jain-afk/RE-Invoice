@@ -4,6 +4,7 @@ import InventoryTab from "./components/InventoryTab";
 import BillingTab from "./components/BillingTab";
 import SettingsTab from "./components/SettingsTab";
 import { ToastProvider } from "./hooks/useToast.tsx";
+import { CartProvider } from "./hooks/useCart.tsx";
 
 type Tab = "billing" | "inventory" | "settings";
 
@@ -19,6 +20,7 @@ function App() {
 
   return (
     <ToastProvider>
+      <CartProvider>
       <div className={styles.app}>
         <aside className={styles.sidebar}>
           <div className={styles.sidebarHeader}>
@@ -71,6 +73,7 @@ function App() {
           </main>
         </div>
       </div>
+      </CartProvider>
     </ToastProvider>
   );
 }

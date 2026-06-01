@@ -25,6 +25,7 @@
   
   --color-success: #1a8917;
   --color-error: #d92121;
+  --color-brand-red: #e11d48; /* Red for Invoice accent */
 
   /* Typography Scale (1.25 Ratio) */
   --font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;

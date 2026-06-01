@@ -11,9 +11,31 @@ fn get_db_path(app: &tauri::AppHandle) -> PathBuf {
     app_data_dir.join("ronak_electricals.db")
 }
 
+fn wsl_path(dir: &str) -> PathBuf {
+    let dir = dir.trim();
+    let bytes = dir.as_bytes();
+    if bytes.len() >= 3
+        && bytes[0].is_ascii_alphabetic()
+        && bytes[1] == b':'
+        && (bytes[2] == b'\\' || bytes[2] == b'/')
+    {
+        let drive = bytes[0].to_ascii_lowercase() as char;
+        let rest = dir[2..].replace('\\', "/");
+        PathBuf::from(format!("/mnt/{}{}", drive, rest))
+    } else {
+        PathBuf::from(dir)
+    }
+}
+
 #[tauri::command]
 fn save_pdf(dir: String, filename: String, bytes: Vec<u8>) -> Result<String, String> {
-    let path = PathBuf::from(&dir).join(&filename);
+    let normalized_dir = wsl_path(&dir);
+    let path = normalized_dir.join(&filename);
+
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+
     std::fs::write(&path, bytes).map_err(|e| e.to_string())?;
     Ok(path.to_string_lossy().to_string())
 }
@@ -41,6 +63,10 @@ pub fn run() {
             db::delete_sub_model,
             db::search_items,
             db::get_product_details,
+            db::suggest_item_bases,
+            db::claim_invoice_number,
+            db::backup_database,
+            db::restore_database,
             save_pdf
         ])
         .run(tauri::generate_context!())

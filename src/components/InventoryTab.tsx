@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useItems, Brand, BrandVariant, SubModelVariant } from "../hooks/useItems";
 import { useToast } from "../hooks/useToast.tsx";
 
@@ -13,6 +13,7 @@ export default function InventoryTab() {
     addSubModel,
     updateSubModel,
     deleteSubModel,
+    suggestItemBases,
   } = useItems();
   const { showToast } = useToast();
 
@@ -35,12 +36,38 @@ export default function InventoryTab() {
   // Add brand form state
   const [newBrandName, setNewBrandName] = useState("");
 
+  // Item suggestions state
+  const [suggestions, setSuggestions] = useState<Brand[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedSuggestionIdx, setSelectedSuggestionIdx] = useState(-1);
+  const suggestionDebounceRef = useRef<number | null>(null);
+  const itemInputRef = useRef<HTMLInputElement>(null);
+
   // Expanded state for products
   const [expandedProducts, setExpandedProducts] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (suggestionDebounceRef.current) clearTimeout(suggestionDebounceRef.current);
+    if (!itemName.trim()) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    suggestionDebounceRef.current = setTimeout(async () => {
+      try {
+        const results = await suggestItemBases(itemName);
+        setSuggestions(results);
+        setShowSuggestions(results.length > 0);
+        setSelectedSuggestionIdx(-1);
+      } catch {
+        // silently fail
+      }
+    }, 200);
+  }, [itemName]);
 
   const loadData = async () => {
     try {
@@ -169,6 +196,28 @@ export default function InventoryTab() {
     }
   };
 
+  const handleSuggestionKeyDown = (e: React.KeyboardEvent) => {
+    if (!showSuggestions || suggestions.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedSuggestionIdx((prev) => (prev < suggestions.length - 1 ? prev + 1 : 0));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedSuggestionIdx((prev) => (prev > 0 ? prev - 1 : suggestions.length - 1));
+    } else if (e.key === "Enter" && selectedSuggestionIdx >= 0) {
+      e.preventDefault();
+      handleSelectSuggestion(suggestions[selectedSuggestionIdx]);
+    } else if (e.key === "Escape") {
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSelectSuggestion = (suggestion: Brand) => {
+    setItemName(suggestion.name);
+    setShowSuggestions(false);
+    setSuggestions([]);
+  };
+
   const toggleProduct = (baseId: number) => {
     const newExpanded = new Set(expandedProducts);
     if (newExpanded.has(baseId)) {
@@ -200,15 +249,35 @@ export default function InventoryTab() {
       {/* Single-row add form */}
       <div style={formCard}>
         <form onSubmit={handleAddItem} style={addForm}>
-          <div style={formField}>
+          <div style={{ ...formField, position: "relative" as const }}>
             <label style={formLabel}>Item</label>
             <input
+              ref={itemInputRef}
               type="text"
               placeholder="e.g. Wire 2.5mm"
               value={itemName}
               onChange={(e) => setItemName(e.target.value)}
+              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+              onKeyDown={handleSuggestionKeyDown}
               style={input}
             />
+            {showSuggestions && suggestions.length > 0 && (
+              <div style={suggestionsDropdown}>
+                {suggestions.map((s, idx) => (
+                  <div
+                    key={s.id}
+                    style={{
+                      ...suggestionRow,
+                      background: idx === selectedSuggestionIdx ? "var(--color-primary)" : undefined,
+                      color: idx === selectedSuggestionIdx ? "white" : undefined,
+                    }}
+                    onClick={() => handleSelectSuggestion(s)}
+                  >
+                    {s.name}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div style={formField}>
@@ -840,5 +909,28 @@ const deleteLink: React.CSSProperties = {
   cursor: "pointer",
   lineHeight: 1,
   padding: "0",
+};
+
+const suggestionsDropdown: React.CSSProperties = {
+  position: "absolute",
+  top: "calc(100% + 4px)",
+  left: 0,
+  right: 0,
+  background: "var(--color-surface)",
+  border: "1px solid var(--color-border)",
+  borderRadius: "var(--radius-md)",
+  boxShadow: "var(--shadow-lg)",
+  maxHeight: "250px",
+  overflowY: "auto",
+  zIndex: 100,
+};
+
+const suggestionRow: React.CSSProperties = {
+  padding: "var(--space-3) var(--space-4)",
+  cursor: "pointer",
+  borderBottom: "1px solid var(--color-border)",
+  fontSize: "var(--font-size-sm)",
+  fontWeight: "500",
+  transition: "all 0.15s",
 };
 

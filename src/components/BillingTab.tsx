@@ -1,17 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useItems, BrandVariant, SearchResult } from "../hooks/useItems";
-import { useCart, CartItem } from "../hooks/useCart";
+import { useCartContext, CartItem } from "../hooks/useCart";
 import { useDate } from "../hooks/useDate";
 import { useToast } from "../hooks/useToast.tsx";
 import InvoicePreview from "./InvoicePreview";
+import InvoicePreviewModal from "./InvoicePreviewModal";
 import "../styles/InvoicePreview.css";
 import { pdf } from "@react-pdf/renderer";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 
 export default function BillingTab() {
-  const { searchItems, getProductDetails } = useItems();
-  const { cart, addToCart, removeFromCart, updateQuantity, updateDiscount, changeSubModel, globalDiscount, setGlobalDiscount, clearCart, grandTotal, getEffectiveDiscount } = useCart();
+  const { searchItems, getProductDetails, claimInvoiceNumber } = useItems();
+  const { cart, addToCart, removeFromCart, updateQuantity, updateDiscount, updatePrice, changeSubModel, globalDiscount, setGlobalDiscount, clearCart, grandTotal, getEffectiveDiscount } = useCartContext();
   const { date, setDate } = useDate();
   const { showToast } = useToast();
 
@@ -24,6 +25,19 @@ export default function BillingTab() {
 
   // PDF generation
   const [pdfLoading, setPdfLoading] = useState(false);
+
+  // Preview modal
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  // Invoice numbering
+  const [invoiceNumber, setInvoiceNumber] = useState<number | null>(null);
+
+  // Refs for keyboard shortcuts (refs avoid stale closure over handlers)
+  const discountRef = useRef<HTMLInputElement>(null);
+  const printRef = useRef<() => void>(() => {});
+  const clearCartRef = useRef<() => void>(() => {});
+  const cartLengthRef = useRef(cart.length);
+  cartLengthRef.current = cart.length;
 
   // Variant picker modal state
   const [variantPickerOpen, setVariantPickerOpen] = useState(false);
@@ -41,18 +55,52 @@ export default function BillingTab() {
   const [changeSubModelNewId, setChangeSubModelNewId] = useState<number | null>(null);
 
   const pdfStyles = StyleSheet.create({
-    page: { padding: 24, fontFamily: "Helvetica" },
-    header: { textAlign: "center", marginBottom: 12 },
-    shopName: { fontSize: 26, color: "#0f172a", fontWeight: "bold" },
-    subtitle: { fontSize: 10, color: "#64748b" },
-    divider: { borderBottom: 2, borderColor: "#0f172a", marginVertical: 12 },
-    meta: { flexDirection: "row", justifyContent: "space-between", fontSize: 10, marginBottom: 12 },
-    table: { marginVertical: 15 },
-    tableHeader: { background: "#f8fafc", padding: 10, fontWeight: "bold", fontSize: 9, textTransform: "uppercase", letterSpacing: 0.5 },
-    tableRow: { flexDirection: "row", borderBottom: 1, borderColor: "#e2e8f0" },
-    tableCell: { padding: 10, fontSize: 10 },
-    totalRow: { textAlign: "right", fontSize: 18, fontWeight: "bold", color: "#0f172a", paddingVertical: 12 },
-    footer: { textAlign: "center", fontSize: 10, fontStyle: "italic", color: "#64748b", marginTop: 20 },
+    page: { padding: 40, fontFamily: "Helvetica", backgroundColor: "white", color: "#2b303a" },
+    topSection: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 30 },
+    brandBlock: { flexDirection: "row", alignItems: "center" },
+    logoPlaceholder: { width: 30, height: 30, backgroundColor: "#174f86", marginRight: 10 },
+    brandNameContainer: { flexDirection: "column" },
+    brandNameMain: { fontSize: 18, fontWeight: "bold", textTransform: "uppercase" },
+    brandNameSub: { fontSize: 9, color: "#5e5e5e" },
+    invoiceLabelLarge: { fontSize: 40, fontWeight: "bold", color: "#e11d48", textTransform: "uppercase" },
+    
+    metaSection: { borderTopWidth: 2, borderTopColor: "#2b303a", paddingTop: 15, marginBottom: 20, flexDirection: "row", justifyContent: "space-between" },
+    customerInfo: { flexDirection: "column" },
+    customerNameBold: { fontSize: 14, fontWeight: "bold", marginBottom: 2 },
+    metaText: { fontSize: 9, color: "#5e5e5e", marginBottom: 1 },
+    idBlock: { textAlign: "right" },
+    idLabel: { fontSize: 10, color: "#8c8c8c", textTransform: "uppercase" },
+    idValue: { fontSize: 20, fontWeight: "bold", letterSpacing: 1 },
+
+    table: { marginBottom: 20 },
+    tableHeader: { flexDirection: "row", backgroundColor: "#2b303a", color: "white", padding: 8 },
+    headerText: { fontSize: 9, fontWeight: "bold", textTransform: "uppercase" },
+    tableRow: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: "#f4f5f6", padding: 8 },
+    tableRowEven: { backgroundColor: "#fcfcfc" },
+    cellText: { fontSize: 9 },
+    cellSubText: { fontSize: 7, color: "#5e5e5e", marginTop: 1 },
+
+    bottomGrid: { flexDirection: "row", justifyContent: "space-between", marginBottom: 30 },
+    paymentBlock: { flexDirection: "column" },
+    paymentTitle: { fontSize: 9, fontWeight: "bold", marginBottom: 4, textTransform: "uppercase" },
+    paymentDetail: { fontSize: 8, color: "#5e5e5e", textTransform: "uppercase" },
+    totalsBlock: { width: 180 },
+    totalRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 4 },
+    totalLabel: { fontSize: 10, color: "#5e5e5e", textTransform: "uppercase" },
+    grandTotalRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 6, borderTopWidth: 1, borderTopColor: "#2b303a", paddingTop: 6 },
+    grandTotalText: { fontSize: 14, fontWeight: "bold" },
+
+    termsSection: { borderTopWidth: 1, borderTopColor: "#dbe1e8", paddingTop: 10 },
+    termsTitle: { fontSize: 9, fontWeight: "bold", marginBottom: 4, textTransform: "uppercase" },
+    termsText: { fontSize: 7, color: "#8c8c8c", lineHeight: 1.4 },
+
+    footerBar: { position: "absolute", bottom: 40, left: 40, right: 40, borderTopWidth: 1, borderTopColor: "#f4f5f6", paddingTop: 10, flexDirection: "row", justifyContent: "space-around" },
+    footerItem: { flexDirection: "row", alignItems: "center" },
+    footerIcon: { width: 12, height: 12, borderRadius: 6, backgroundColor: "#e11d48", color: "white", textAlign: "center", fontSize: 7, marginRight: 5, lineHeight: 1.5 },
+    footerText: { fontSize: 8, fontWeight: "bold" },
+    
+    bottomDecoration: { position: "absolute", bottom: 0, left: 0, right: 0, height: 30, backgroundColor: "#2b303a", flexDirection: "row" },
+    redAccent: { width: "30%", height: "100%", backgroundColor: "#e11d48" }
   });
 
   const generatePDF = async (size: "A4" | "A5") => {
@@ -62,54 +110,124 @@ export default function BillingTab() {
     }
     setPdfLoading(true);
     try {
+      const num = await claimInvoiceNumber();
+      setInvoiceNumber(num);
+      const invLabel = num ? String(num).padStart(6, "0") : "000000";
+
+      const subtotal = cart.reduce((sum, c) => sum + c.price * c.quantity, 0);
+      const totalDiscount = cart.reduce((sum, c) => {
+        const d = getEffectiveDiscount(c);
+        return sum + (c.price * d / 100) * c.quantity;
+      }, 0);
+      const grandTotal = subtotal - totalDiscount;
+
       const InvoicePDF = () => (
         <Document>
           <Page size={size} style={pdfStyles.page}>
-            <View style={pdfStyles.header}>
-              <Text style={pdfStyles.shopName}>RONAK ELECTRICALS</Text>
-              <Text style={pdfStyles.subtitle}>Electrical Goods & Accessories</Text>
+            {/* Header */}
+            <View style={pdfStyles.topSection}>
+              <View style={pdfStyles.brandBlock}>
+                <View style={pdfStyles.logoPlaceholder} />
+                <View style={pdfStyles.brandNameContainer}>
+                  <Text style={pdfStyles.brandNameMain}>Ronak Electricals</Text>
+                  <Text style={pdfStyles.brandNameSub}>Electrical Goods & Accessories</Text>
+                </View>
+              </View>
+              <Text style={pdfStyles.invoiceLabelLarge}>Invoice</Text>
             </View>
-            <View style={pdfStyles.divider} />
-            <View style={pdfStyles.meta}>
-              <Text>Invoice Date: {date}</Text>
-              <Text>{customerName && `Customer: ${customerName}`}{customerMobile && ` | ${customerMobile}`}</Text>
+
+            {/* Meta */}
+            <View style={pdfStyles.metaSection}>
+              <View style={pdfStyles.customerInfo}>
+                <Text style={pdfStyles.customerNameBold}>{customerName || "Walking Customer"}</Text>
+                <Text style={pdfStyles.metaText}>Date: {date}</Text>
+                {customerMobile && <Text style={pdfStyles.metaText}>Phone: +91 {customerMobile}</Text>}
+                <Text style={pdfStyles.metaText}>Address: Local Market, Main Road, City</Text>
+              </View>
+              <View style={pdfStyles.idBlock}>
+                <Text style={pdfStyles.idLabel}>Invoice</Text>
+                <Text style={pdfStyles.idValue}>{invLabel}</Text>
+              </View>
             </View>
-            <View style={pdfStyles.divider} />
+
+            {/* Table */}
             <View style={pdfStyles.table}>
-              <View style={{ flexDirection: "row", ...pdfStyles.tableHeader }}>
-                <Text style={[pdfStyles.tableCell, { width: "10%" }]}>#</Text>
-                <Text style={[pdfStyles.tableCell, { width: "30%" }]}>Item</Text>
-                <Text style={[pdfStyles.tableCell, { width: "15%" }]}>Brand</Text>
-                <Text style={[pdfStyles.tableCell, { width: "10%" }]}>Qty</Text>
-                <Text style={[pdfStyles.tableCell, { width: "12%", textAlign: "right" }]}>Unit</Text>
-                <Text style={[pdfStyles.tableCell, { width: "23%", textAlign: "right" }]}>Total</Text>
+              <View style={pdfStyles.tableHeader}>
+                <Text style={[pdfStyles.headerText, { width: "40%" }]}>Product</Text>
+                <Text style={[pdfStyles.headerText, { width: "20%", textAlign: "center" }]}>Price</Text>
+                <Text style={[pdfStyles.headerText, { width: "15%", textAlign: "center" }]}>Qty</Text>
+                <Text style={[pdfStyles.headerText, { width: "25%", textAlign: "right" }]}>Total</Text>
               </View>
               {cart.map((c, idx) => {
                 const discount = getEffectiveDiscount(c);
-                const discountAmount = (c.price * discount) / 100;
-                const finalPrice = c.price - discountAmount;
+                const finalPrice = c.price * (1 - discount / 100);
                 const total = finalPrice * c.quantity;
                 return (
-                  <View key={c.sub_model_id} style={pdfStyles.tableRow}>
-                    <Text style={[pdfStyles.tableCell, { width: "10%" }]}>{idx + 1}</Text>
-                    <Text style={[pdfStyles.tableCell, { width: "30%" }]}>{c.base_name}</Text>
-                    <Text style={[pdfStyles.tableCell, { width: "15%" }]}>{c.brand_name || "-"} / {c.sub_model_name}</Text>
-                    <Text style={[pdfStyles.tableCell, { width: "10%" }]}>{c.quantity}</Text>
-                    <Text style={[pdfStyles.tableCell, { width: "12%", textAlign: "right" }]}>Rs. {finalPrice.toFixed(2)}</Text>
-                    <Text style={[pdfStyles.tableCell, { width: "23%", textAlign: "right" }]}>Rs. {total.toFixed(2)}</Text>
+                  <View key={c.sub_model_id} style={[pdfStyles.tableRow, idx % 2 === 1 ? pdfStyles.tableRowEven : {}]}>
+                    <View style={{ width: "40%" }}>
+                      <Text style={[pdfStyles.cellText, { fontWeight: "bold" }]}>{c.base_name}</Text>
+                      <Text style={pdfStyles.cellSubText}>{c.brand_name} / {c.sub_model_name}</Text>
+                    </View>
+                    <Text style={[pdfStyles.cellText, { width: "20%", textAlign: "center" }]}>Rs. {c.price.toFixed(2)}</Text>
+                    <Text style={[pdfStyles.cellText, { width: "15%", textAlign: "center" }]}>{c.quantity}</Text>
+                    <Text style={[pdfStyles.cellText, { width: "25%", textAlign: "right" }]}>Rs. {total.toFixed(2)}</Text>
                   </View>
                 );
               })}
             </View>
-            <View style={pdfStyles.divider} />
-            <Text style={pdfStyles.totalRow}>Grand Total: Rs. {grandTotal.toFixed(2)}</Text>
-            <Text style={pdfStyles.footer}>Thank you for your purchase!</Text>
+
+            {/* Bottom */}
+            <View style={pdfStyles.bottomGrid}>
+              <View style={pdfStyles.paymentBlock}>
+                <Text style={pdfStyles.paymentTitle}>Payment Data:</Text>
+                <Text style={pdfStyles.paymentDetail}>Method: Cash / UPI</Text>
+                <Text style={pdfStyles.paymentDetail}>Status: Paid</Text>
+              </View>
+              <View style={pdfStyles.totalsBlock}>
+                <View style={pdfStyles.totalRow}>
+                  <Text style={pdfStyles.totalLabel}>Subtotal</Text>
+                  <Text style={pdfStyles.cellText}>Rs. {subtotal.toFixed(2)}</Text>
+                </View>
+                {totalDiscount > 0 && (
+                  <View style={pdfStyles.totalRow}>
+                    <Text style={pdfStyles.totalLabel}>Discount</Text>
+                    <Text style={pdfStyles.cellText}>- Rs. {totalDiscount.toFixed(2)}</Text>
+                  </View>
+                )}
+                <View style={pdfStyles.grandTotalRow}>
+                  <Text style={[pdfStyles.totalLabel, { color: "#2b303a", fontWeight: "bold" }]}>Total</Text>
+                  <Text style={pdfStyles.grandTotalText}>Rs. {grandTotal.toFixed(2)}</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Terms */}
+            <View style={pdfStyles.termsSection}>
+              <Text style={pdfStyles.termsTitle}>Terms and Conditions</Text>
+              <Text style={pdfStyles.termsText}>
+                Goods once sold will not be taken back or exchanged. Warranty as per manufacturer terms.
+              </Text>
+            </View>
+
+            {/* Footer */}
+            <View style={pdfStyles.footerBar}>
+              <View style={pdfStyles.footerItem}>
+                <Text style={pdfStyles.footerText}>☏ +91-9876543210</Text>
+              </View>
+              <View style={pdfStyles.footerItem}>
+                <Text style={pdfStyles.footerText}>@ contact@ronakelectricals.com</Text>
+              </View>
+            </View>
+
+            <View style={pdfStyles.bottomDecoration}>
+              <View style={pdfStyles.redAccent} />
+            </View>
           </Page>
         </Document>
       );
 
       const blob = await pdf(<InvoicePDF />).toBlob();
-      const filename = `Invoice-Ronak-Electricals-${size}-${Date.now()}.pdf`;
+      const filename = `Invoice-Ronak-Electricals-${size}-${invLabel}.pdf`;
       const saveDir = localStorage.getItem("pdfSavePath");
 
       if (saveDir && saveDir.trim().length > 0) {
@@ -220,6 +338,7 @@ export default function BillingTab() {
       sub_model_id: selectedSM.id,
       sub_model_name: selectedSM.name,
       price: selectedSM.price,
+      original_price: selectedSM.price,
       quantity: pickerQty,
       discount: 0,
     };
@@ -266,6 +385,7 @@ export default function BillingTab() {
       sub_model_id: newSM.id,
       sub_model_name: newSM.name,
       price: newSM.price,
+      original_price: newSM.price,
       quantity: currentItem.quantity,
       discount: currentItem.discount,
     };
@@ -275,14 +395,21 @@ export default function BillingTab() {
     setChangeBrandModal(false);
   };
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     if (cart.length === 0) {
       showToast("Cart is empty", "error");
       return;
     }
-    window.print();
+    try {
+      const num = await claimInvoiceNumber();
+      setInvoiceNumber(num);
+    } catch {
+      // proceed without number
+    }
+    setTimeout(() => window.print(), 50);
     showToast("Invoice sent to printer");
   };
+  printRef.current = handlePrint;
 
   const handleClearCart = () => {
     if (cart.length === 0) return;
@@ -291,6 +418,42 @@ export default function BillingTab() {
       showToast("Cart cleared");
     }
   };
+  clearCartRef.current = handleClearCart;
+
+  // Keyboard shortcuts (uses refs to avoid stale closures)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setShowResults(false);
+        setVariantPickerOpen(false);
+        setChangeBrandModal(false);
+        return;
+      }
+
+      if (e.ctrlKey || e.metaKey) {
+        switch (e.key.toLowerCase()) {
+          case "p":
+            e.preventDefault();
+            if (cartLengthRef.current > 0) printRef.current();
+            break;
+          case "n":
+            e.preventDefault();
+            if (cartLengthRef.current > 0) clearCartRef.current();
+            break;
+          case "f":
+            e.preventDefault();
+            searchRef.current?.focus();
+            break;
+          case "d":
+            e.preventDefault();
+            discountRef.current?.focus();
+            break;
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   return (
     <div style={container}>
@@ -514,6 +677,7 @@ export default function BillingTab() {
                 min="0"
                 max="100"
                 step="0.5"
+                ref={discountRef}
                 value={globalDiscount}
                 onChange={(e) => setGlobalDiscount(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
                 style={discountInput}
@@ -584,6 +748,35 @@ export default function BillingTab() {
                           {discount > 0 && <span style={{fontSize: '11px', color: 'var(--color-success)', fontWeight: '600'}}>({discount.toFixed(1)}% Applied)</span>}
                         </div>
 
+                        {/* Price Override */}
+                        <div style={cartItemRow}>
+                          <label style={cartItemLabel}>Unit Price</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={c.price}
+                            onChange={(e) => {
+                              const v = parseFloat(e.target.value);
+                              if (!isNaN(v) && v > 0) updatePrice(c.sub_model_id, v);
+                            }}
+                            style={cartItemQtyField}
+                          />
+                          {c.price !== c.original_price && (
+                            <>
+                              <span style={{fontSize: '11px', color: 'var(--color-text-secondary)', textDecoration: 'line-through', marginRight: '4px'}}>
+                                ₹{c.original_price.toFixed(2)}
+                              </span>
+                              <button
+                                onClick={() => updatePrice(c.sub_model_id, c.original_price)}
+                                style={{...changeButton, marginLeft: 0}}
+                              >
+                                Reset
+                              </button>
+                            </>
+                          )}
+                        </div>
+
                         {/* Price Summary */}
                         <div style={cartItemPriceLine}>
                           <span style={cartItemPriceLabel}>
@@ -611,6 +804,9 @@ export default function BillingTab() {
                   Print Invoice
                 </button>
                 <div style={actionsRow}>
+                  <button onClick={() => setPreviewOpen(true)} disabled={cart.length === 0} style={actionButtonSecondary}>
+                    Preview
+                  </button>
                   <button onClick={() => generatePDF("A4")} disabled={cart.length === 0 || pdfLoading} style={actionButtonSecondary}>
                     {pdfLoading ? "Wait..." : "PDF (A4)"}
                   </button>
@@ -624,8 +820,25 @@ export default function BillingTab() {
         </div>
       </div>
 
+      <>
+      {/* Invoice Preview Modal */}
+      {previewOpen && (
+        <InvoicePreviewModal
+          cart={cart}
+          date={date}
+          customerName={customerName}
+          customerMobile={customerMobile}
+          globalDiscount={globalDiscount}
+          getEffectiveDiscount={getEffectiveDiscount}
+          invoiceNumber={invoiceNumber}
+          onClose={() => setPreviewOpen(false)}
+          onPrint={() => { setPreviewOpen(false); handlePrint(); }}
+        />
+      )}
+
       {/* Invoice Preview (hidden by CSS, visible during print) */}
-      <InvoicePreview cart={cart} date={date} customerName={customerName} customerMobile={customerMobile} globalDiscount={globalDiscount} getEffectiveDiscount={getEffectiveDiscount} />
+      <InvoicePreview cart={cart} date={date} customerName={customerName} customerMobile={customerMobile} globalDiscount={globalDiscount} getEffectiveDiscount={getEffectiveDiscount} invoiceNumber={invoiceNumber} />
+      </>
     </div>
   );
 }
