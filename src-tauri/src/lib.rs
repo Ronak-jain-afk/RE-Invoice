@@ -12,8 +12,10 @@ fn get_db_path(app: &tauri::AppHandle) -> PathBuf {
 }
 
 #[tauri::command]
-fn save_pdf(path: String, bytes: Vec<u8>) -> Result<(), String> {
-    std::fs::write(&path, bytes).map_err(|e| e.to_string())
+fn save_pdf(dir: String, filename: String, bytes: Vec<u8>) -> Result<String, String> {
+    let path = PathBuf::from(&dir).join(&filename);
+    std::fs::write(&path, bytes).map_err(|e| e.to_string())?;
+    Ok(path.to_string_lossy().to_string())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

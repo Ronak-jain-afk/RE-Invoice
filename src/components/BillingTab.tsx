@@ -109,20 +109,19 @@ export default function BillingTab() {
       );
 
       const blob = await pdf(<InvoicePDF />).toBlob();
-      const fileName = `Invoice-Ronak-Electricals-${size}-${Date.now()}.pdf`;
-      const savePath = localStorage.getItem("pdfSavePath");
+      const filename = `Invoice-Ronak-Electricals-${size}-${Date.now()}.pdf`;
+      const saveDir = localStorage.getItem("pdfSavePath");
 
-      if (savePath && savePath.trim().length > 0) {
+      if (saveDir && saveDir.trim().length > 0) {
         const buffer = await blob.arrayBuffer();
         const uint8Array = new Uint8Array(buffer);
-        let fullPath = savePath.trim();
-        if (!fullPath.endsWith("\\") && !fullPath.endsWith("/")) {
-          fullPath += "\\";
-        }
-        fullPath += fileName;
 
         try {
-          await invoke("save_pdf", { path: fullPath, bytes: Array.from(uint8Array) });
+          const fullPath = await invoke<string>("save_pdf", {
+            dir: saveDir.trim(),
+            filename,
+            bytes: Array.from(uint8Array),
+          });
           showToast(`PDF saved to ${fullPath}`);
         } catch (e) {
           showToast(`Failed to save PDF: ${e}`, "error");
@@ -131,7 +130,7 @@ export default function BillingTab() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = fileName;
+        a.download = filename;
         a.click();
         URL.revokeObjectURL(url);
         showToast(`PDF (${size}) downloaded`);
