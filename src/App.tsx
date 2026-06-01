@@ -46,7 +46,24 @@ function App() {
             </button>
           </nav>
         </aside>
+        
         <div className={styles.mainArea}>
+          <header className={styles.topHeader}>
+            <div className={styles.headerLeft}>
+              <div className={styles.orgBadge}>Ronak Electricals</div>
+            </div>
+            <div className={styles.headerRight}>
+              <div className={styles.headerAction}>Getting started</div>
+              <div className={styles.profileSection}>
+                <div className={styles.avatar}>RE</div>
+                <div className={styles.userInfo}>
+                  <span className={styles.userName}>Ronak</span>
+                  <span className={styles.userEmail}>admin@ronakelectricals.com</span>
+                </div>
+              </div>
+            </div>
+          </header>
+          
           <main className={styles.content}>
             {activeTab === "billing" && <BillingTab />}
             {activeTab === "inventory" && <InventoryTab />}

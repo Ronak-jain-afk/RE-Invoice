@@ -89,20 +89,22 @@ const container: React.CSSProperties = {
 
 const pageTitle: React.CSSProperties = {
   fontSize: "var(--font-size-xl)",
-  fontWeight: "600",
+  fontWeight: "700",
   color: "var(--color-text)",
+  letterSpacing: "-0.01em",
 };
 
 const settingsGrid: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: "var(--space-4)",
+  gap: "var(--space-6)",
 };
 
 const card: React.CSSProperties = {
   background: "var(--color-surface)",
-  padding: "var(--space-6)",
+  padding: "var(--space-8)",
   borderRadius: "var(--radius-md)",
+  border: "1px solid var(--color-border)",
   boxShadow: "var(--shadow-sm)",
   display: "flex",
   flexDirection: "column",
@@ -123,24 +125,27 @@ const description: React.CSSProperties = {
 
 const themeOptions: React.CSSProperties = {
   display: "flex",
-  gap: "var(--space-3)",
+  gap: "var(--space-4)",
 };
 
 const themeBtn: React.CSSProperties = {
   flex: 1,
   padding: "var(--space-4)",
-  background: "var(--color-bg)",
-  border: "2px solid var(--color-border)",
+  background: "var(--color-surface)",
+  border: "1px solid var(--color-border)",
   borderRadius: "var(--radius-md)",
   fontSize: "var(--font-size-base)",
-  fontWeight: "500",
+  fontWeight: "600",
   color: "var(--color-text-secondary)",
+  cursor: "pointer",
+  transition: "all 0.2s",
 };
 
 const themeBtnActive: React.CSSProperties = {
-  background: "var(--color-primary)",
+  background: "var(--color-primary-light)",
   borderColor: "var(--color-primary)",
-  color: "white",
+  color: "var(--color-primary)",
+  boxShadow: "0 0 0 1px var(--color-primary)",
 };
 
 const inputRow: React.CSSProperties = {
@@ -157,13 +162,20 @@ const input: React.CSSProperties = {
   fontSize: "var(--font-size-sm)",
   background: "var(--color-surface)",
   color: "var(--color-text)",
+  fontWeight: "500",
 };
 
 const primaryButton: React.CSSProperties = {
   padding: "var(--space-3) var(--space-6)",
   background: "var(--color-primary)",
   color: "white",
+  border: "none",
   borderRadius: "var(--radius-sm)",
-  fontWeight: "600",
+  fontWeight: "700",
   fontSize: "var(--font-size-sm)",
+  textTransform: "uppercase",
+  letterSpacing: "0.03em",
+  cursor: "pointer",
+  boxShadow: "0 4px 12px rgba(0, 102, 204, 0.2)",
 };
+

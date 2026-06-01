@@ -7,34 +7,35 @@
 }
 
 :root {
-  --color-primary: #ea580c; /* Modern bright orange */
-  --color-primary-hover: #c2410c;
-  --color-primary-light: #f97316;
+  /* Brand Palette - Zoho Inspired Professional Blues */
+  --color-primary: #0066cc;
+  --color-primary-hover: #0052a3;
+  --color-primary-light: #e6f0ff;
   
-  --color-navy: #0f172a; /* Deep, rich professional navy */
-  --color-navy-hover: #1e293b;
+  --color-navy: #174f86; /* Corporate sidebar blue */
+  --color-navy-hover: #123e69;
   
-  --color-bg: #f8fafc; /* Crisp slate-tinted background */
+  --color-bg: #f4f5f7; /* Soft slate gray for contrast against cards */
   --color-surface: #ffffff;
-  --color-border: #e2e8f0;
+  --color-border: #dbe1e8;
   
-  --color-text: #0f172a;
-  --color-text-secondary: #64748b;
-  --color-text-muted: #94a3b8;
+  --color-text: #1a1a1a;
+  --color-text-secondary: #5e5e5e;
+  --color-text-muted: #8c8c8c;
   
-  --color-success: #16a34a;
-  --color-error: #dc2626;
-  --color-accent: #ea580c;
-  --color-accent-light: #f97316;
+  --color-success: #1a8917;
+  --color-error: #d92121;
 
-  --font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* Typography Scale (1.25 Ratio) */
+  --font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-size-xs: 12px;
   --font-size-sm: 14px;
   --font-size-base: 15px;
-  --font-size-lg: 18px;
-  --font-size-xl: 22px;
-  --font-size-2xl: 28px;
+  --font-size-lg: 19px;
+  --font-size-xl: 24px;
+  --font-size-2xl: 30px;
 
+  /* Spacing */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -43,46 +44,28 @@
   --space-6: 24px;
   --space-8: 32px;
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  /* Structural Radii (Restrained per Impeccable) */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
   
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+  /* Refined Shadows (Structural, no "ghost cards") */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
   --border-width: 1px;
 }
 
 [data-theme='dark'] {
-  --color-primary: #f97316; 
-  --color-primary-hover: #ea580c;
-  --color-primary-light: #fb923c;
+  --color-primary: #4791ff; 
+  --color-primary-hover: #3b7adb;
+  --color-primary-light: #1e293b;
   
   --color-navy: #1e293b;
   --color-navy-hover: #334155;
   
   --color-bg: #0f172a;
   --color-surface: #1e293b;
-  --color-border: #334155;
-  
-  --color-text: #f8fafc;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #64748b;
-  
-  --color-success: #22c55e;
-  --color-error: #ef4444;
-  --color-accent: #f97316;
-  --color-accent-light: #fb923c;
-}
-
-[data-theme='dark'] {
-  --color-primary: #f97316; 
-  --color-primary-hover: #ea580c;
-  --color-navy: #1e293b;
-  --color-navy-hover: #334155;
-  
-  --color-bg: #0f172a; /* Deep background matching light navy */
-  --color-surface: #1e293b; /* Elevated surface */
   --color-border: #334155;
   
   --color-text: #f8fafc;

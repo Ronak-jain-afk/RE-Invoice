@@ -534,19 +534,19 @@ export default function BillingTab() {
                       <div key={c.sub_model_id} style={cartItemCard}>
                         <div style={cartItemHeader}>
                           <div>
-                            <div style={{ fontWeight: 600 }}>{c.base_name}</div>
+                            <div style={cartItemName}>{c.base_name}</div>
                             <div style={cartItemMeta}>
                               {c.brand_name || "-"} → {c.sub_model_name} · ₹{c.price.toFixed(2)}
                             </div>
                           </div>
-                          <button onClick={() => removeFromCart(c.sub_model_id)} style={removeBtn}>
+                          <button onClick={() => removeFromCart(c.sub_model_id)} style={removeBtn} title="Remove item">
                             ×
                           </button>
                         </div>
 
                         {/* Quantity Control */}
                         <div style={cartItemRow}>
-                          <label style={cartItemLabel}>Qty</label>
+                          <label style={cartItemLabel}>Quantity</label>
                           <input
                             type="number"
                             min="1"
@@ -556,11 +556,17 @@ export default function BillingTab() {
                             }
                             style={cartItemQtyField}
                           />
+                          <button
+                            onClick={() => handleOpenChangeBrand(c)}
+                            style={changeButton}
+                          >
+                            Change Brand/Model
+                          </button>
                         </div>
 
                         {/* Discount Override */}
                         <div style={cartItemRow}>
-                          <label style={cartItemLabel}>Discount % {discount > 0 && `(${discount.toFixed(1)}%)`}</label>
+                          <label style={cartItemLabel}>Discount %</label>
                           <input
                             type="number"
                             min="0"
@@ -576,23 +582,15 @@ export default function BillingTab() {
                             }
                             style={cartItemDiscountField}
                           />
-                        </div>
-
-                        {/* Change Brand Button */}
-                        <div style={cartItemRow}>
-                          <button
-                            onClick={() => handleOpenChangeBrand(c)}
-                            style={changeButton}
-                          >
-                            Change Brand/Model
-                          </button>
+                          {discount > 0 && <span style={{fontSize: '11px', color: 'var(--color-success)', fontWeight: '600'}}>({discount.toFixed(1)}% Applied)</span>}
                         </div>
 
                         {/* Price Summary */}
                         <div style={cartItemPriceLine}>
                           <span style={cartItemPriceLabel}>
-                            {c.quantity} × ₹{finalPrice.toFixed(2)} = ₹{total.toFixed(2)}
+                            {c.quantity} × ₹{finalPrice.toFixed(2)}
                           </span>
+                          ₹{total.toFixed(2)}
                         </div>
                       </div>
                     );
@@ -641,7 +639,7 @@ const container: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
   height: "100%",
-  gap: "var(--space-4)",
+  gap: "var(--space-6)",
 };
 
 const splitLayout: React.CSSProperties = {
@@ -655,7 +653,7 @@ const leftColumn: React.CSSProperties = {
   flex: 1,
   display: "flex",
   flexDirection: "column",
-  gap: "var(--space-4)",
+  gap: "var(--space-6)",
   minWidth: 0,
 };
 
@@ -668,8 +666,9 @@ const rightColumn: React.CSSProperties = {
 
 const headerCard: React.CSSProperties = {
   background: "var(--color-surface)",
-  padding: "var(--space-4)",
+  padding: "var(--space-6)",
   borderRadius: "var(--radius-md)",
+  border: "1px solid var(--color-border)",
   boxShadow: "var(--shadow-sm)",
   display: "flex",
   gap: "var(--space-4)",
@@ -678,8 +677,9 @@ const headerCard: React.CSSProperties = {
 
 const searchCard: React.CSSProperties = {
   background: "var(--color-surface)",
-  padding: "var(--space-4)",
+  padding: "var(--space-6)",
   borderRadius: "var(--radius-md)",
+  border: "1px solid var(--color-border)",
   boxShadow: "var(--shadow-sm)",
   position: "relative",
   flex: 1,
@@ -688,6 +688,7 @@ const searchCard: React.CSSProperties = {
 const cartCard: React.CSSProperties = {
   background: "var(--color-surface)",
   borderRadius: "var(--radius-md)",
+  border: "1px solid var(--color-border)",
   boxShadow: "var(--shadow-sm)",
   display: "flex",
   flexDirection: "column",
@@ -696,46 +697,56 @@ const cartCard: React.CSSProperties = {
 };
 
 const cartHeader: React.CSSProperties = {
-  padding: "var(--space-4)",
+  padding: "var(--space-4) var(--space-6)",
   borderBottom: "1px solid var(--color-border)",
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
+  background: "#fcfcfc",
+  borderTopLeftRadius: "var(--radius-md)",
+  borderTopRightRadius: "var(--radius-md)",
 };
 
 const cartScrollArea: React.CSSProperties = {
   flex: 1,
   overflowY: "auto",
-  padding: "var(--space-4)",
+  padding: "var(--space-6)",
 };
 
 const cartFooter: React.CSSProperties = {
   borderTop: "1px solid var(--color-border)",
-  padding: "var(--space-4)",
+  padding: "var(--space-6)",
   display: "flex",
   flexDirection: "column",
   gap: "var(--space-4)",
+  background: "#fcfcfc",
+  borderBottomLeftRadius: "var(--radius-md)",
+  borderBottomRightRadius: "var(--radius-md)",
 };
 
 const sectionTitle: React.CSSProperties = {
   fontSize: "var(--font-size-base)",
   fontWeight: "600",
   color: "var(--color-text)",
-  marginBottom: "var(--space-3)",
+  marginBottom: "var(--space-4)",
+  textTransform: "uppercase",
+  letterSpacing: "0.02em",
 };
 
 const inputGroup: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: "var(--space-1)",
+  gap: "var(--space-2)",
   flex: 1,
-  minWidth: "150px",
+  minWidth: "180px",
 };
 
 const label: React.CSSProperties = {
   fontSize: "var(--font-size-xs)",
   color: "var(--color-text-secondary)",
-  fontWeight: "500",
+  fontWeight: "600",
+  textTransform: "uppercase",
+  letterSpacing: "0.03em",
 };
 
 const input: React.CSSProperties = {
@@ -745,6 +756,7 @@ const input: React.CSSProperties = {
   fontSize: "var(--font-size-sm)",
   background: "var(--color-surface)",
   color: "var(--color-text)",
+  transition: "border-color 0.2s",
 };
 
 const searchSection: React.CSSProperties = {
@@ -753,43 +765,48 @@ const searchSection: React.CSSProperties = {
 
 const searchInput: React.CSSProperties = {
   width: "100%",
-  padding: "var(--space-3)",
+  padding: "var(--space-3) var(--space-4)",
   border: "1px solid var(--color-border)",
   borderRadius: "var(--radius-sm)",
   fontSize: "var(--font-size-base)",
   background: "var(--color-surface)",
   color: "var(--color-text)",
+  boxShadow: "inset 0 1px 2px rgba(0,0,0,0.02)",
 };
 
 const resultsDropdown: React.CSSProperties = {
   position: "absolute",
-  top: "100%",
+  top: "calc(100% + 4px)",
   left: 0,
   right: 0,
   background: "var(--color-surface)",
   border: "1px solid var(--color-border)",
-  borderRadius: "var(--radius-sm)",
-  boxShadow: "var(--shadow-md)",
-  maxHeight: "300px",
+  borderRadius: "var(--radius-md)",
+  boxShadow: "var(--shadow-lg)",
+  maxHeight: "350px",
   overflowY: "auto",
   zIndex: 100,
 };
 
 const resultRow: React.CSSProperties = {
-  padding: "var(--space-3)",
+  padding: "var(--space-3) var(--space-4)",
   cursor: "pointer",
   borderBottom: "1px solid var(--color-border)",
   display: "flex",
   justifyContent: "space-between",
+  alignItems: "center",
+  transition: "all 0.15s",
 };
 
 const resultName: React.CSSProperties = {
-  fontWeight: "500",
+  fontWeight: "600",
+  fontSize: "var(--font-size-base)",
 };
 
 const resultMeta: React.CSSProperties = {
   color: "var(--color-text-secondary)",
-  fontSize: "var(--font-size-sm)",
+  fontSize: "var(--font-size-xs)",
+  marginTop: "2px",
 };
 
 const modalOverlay: React.CSSProperties = {
@@ -798,7 +815,8 @@ const modalOverlay: React.CSSProperties = {
   left: 0,
   right: 0,
   bottom: 0,
-  background: "rgba(0,0,0,0.5)",
+  background: "rgba(15, 23, 42, 0.6)",
+  backdropFilter: "blur(4px)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -807,187 +825,213 @@ const modalOverlay: React.CSSProperties = {
 
 const modal: React.CSSProperties = {
   background: "var(--color-surface)",
-  padding: "var(--space-6)",
-  borderRadius: "var(--radius-md)",
-  minWidth: "500px",
-  maxHeight: "80vh",
+  padding: "var(--space-8)",
+  borderRadius: "var(--radius-lg)",
+  width: "600px",
+  maxHeight: "85vh",
   overflowY: "auto",
   boxShadow: "var(--shadow-lg)",
 };
 
 const modalTitle: React.CSSProperties = {
-  marginBottom: "var(--space-4)",
-  fontSize: "var(--font-size-lg)",
+  marginBottom: "var(--space-6)",
+  fontSize: "var(--font-size-xl)",
   fontWeight: "600",
+  color: "var(--color-text)",
+  borderBottom: "1px solid var(--color-border)",
+  paddingBottom: "var(--space-4)",
 };
 
 const variantPickerContainer: React.CSSProperties = {
-  marginBottom: "var(--space-4)",
-  maxHeight: "300px",
+  marginBottom: "var(--space-6)",
+  maxHeight: "400px",
   overflowY: "auto",
+  display: "flex",
+  flexDirection: "column",
+  gap: "var(--space-4)",
 };
 
 const brandSection: React.CSSProperties = {
-  marginBottom: "var(--space-4)",
+  background: "var(--color-bg)",
+  padding: "var(--space-4)",
+  borderRadius: "var(--radius-md)",
+  border: "1px solid var(--color-border)",
 };
 
 const brandSectionTitle: React.CSSProperties = {
-  fontWeight: "600",
-  marginBottom: "var(--space-2)",
-  fontSize: "var(--font-size-sm)",
+  fontWeight: "700",
+  marginBottom: "var(--space-3)",
+  fontSize: "var(--font-size-xs)",
   textTransform: "uppercase",
   color: "var(--color-primary)",
+  letterSpacing: "0.05em",
 };
 
 const subModelsContainer: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
   gap: "var(--space-2)",
-  marginLeft: "var(--space-3)",
 };
 
 const radioLabel: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: "var(--space-2)",
+  gap: "var(--space-3)",
   cursor: "pointer",
-  padding: "var(--space-2)",
+  padding: "var(--space-3)",
   borderRadius: "var(--radius-sm)",
-  transition: "background 0.15s",
+  background: "var(--color-surface)",
+  border: "1px solid var(--color-border)",
+  transition: "all 0.2s",
 };
 
 const radioInput: React.CSSProperties = {
   cursor: "pointer",
+  width: "18px",
+  height: "18px",
   accentColor: "var(--color-primary)",
 };
 
 const radioText: React.CSSProperties = {
   flex: 1,
   fontSize: "var(--font-size-sm)",
+  fontWeight: "500",
 };
 
 const subModelPrice: React.CSSProperties = {
   color: "var(--color-primary)",
-  fontWeight: "600",
-  marginLeft: "var(--space-2)",
+  fontWeight: "700",
+  marginLeft: "auto",
 };
 
 const qtySection: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: "var(--space-3)",
-  marginBottom: "var(--space-3)",
-  padding: "var(--space-3) 0",
+  justifyContent: "space-between",
+  gap: "var(--space-4)",
+  margin: "var(--space-6) 0",
+  padding: "var(--space-6) 0",
   borderTop: "1px solid var(--color-border)",
+  borderBottom: "1px solid var(--color-border)",
 };
 
 const qtyLabel: React.CSSProperties = {
-  fontSize: "var(--font-size-sm)",
-  fontWeight: "500",
-  minWidth: "80px",
+  fontSize: "var(--font-size-base)",
+  fontWeight: "600",
 };
 
 const qtyControl: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: "var(--space-2)",
+  gap: "var(--space-1)",
+  background: "var(--color-bg)",
+  padding: "4px",
+  borderRadius: "var(--radius-sm)",
+  border: "1px solid var(--color-border)",
 };
 
 const qtyBtn: React.CSSProperties = {
-  width: "36px",
-  height: "36px",
+  width: "32px",
+  height: "32px",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  background: "var(--color-bg)",
+  background: "var(--color-surface)",
   border: "1px solid var(--color-border)",
   borderRadius: "var(--radius-sm)",
   fontSize: "var(--font-size-lg)",
   fontWeight: "600",
   cursor: "pointer",
+  boxShadow: "var(--shadow-sm)",
 };
 
 const qtyInput: React.CSSProperties = {
-  width: "80px",
-  padding: "var(--space-2)",
-  fontSize: "var(--font-size-xl)",
+  width: "60px",
+  padding: "var(--space-1)",
+  fontSize: "var(--font-size-lg)",
   textAlign: "center",
-  border: "1px solid var(--color-border)",
-  borderRadius: "var(--radius-sm)",
-  fontWeight: "600",
+  border: "none",
+  background: "transparent",
+  fontWeight: "700",
   color: "var(--color-text)",
-  background: "var(--color-surface)",
 };
 
 const priceDisplay: React.CSSProperties = {
-  textAlign: "center",
-  fontSize: "var(--font-size-base)",
-  fontWeight: "600",
+  textAlign: "right",
+  fontSize: "var(--font-size-lg)",
+  fontWeight: "700",
   color: "var(--color-primary)",
-  marginBottom: "var(--space-3)",
+  marginBottom: "var(--space-6)",
 };
 
 const modalButtons: React.CSSProperties = {
   display: "flex",
   gap: "var(--space-3)",
   justifyContent: "flex-end",
-  paddingTop: "var(--space-3)",
-  borderTop: "1px solid var(--color-border)",
 };
 
 const cancelButton: React.CSSProperties = {
-  padding: "var(--space-2) var(--space-4)",
+  padding: "var(--space-2) var(--space-6)",
   background: "var(--color-bg)",
   border: "1px solid var(--color-border)",
   borderRadius: "var(--radius-sm)",
-  fontWeight: "500",
+  fontWeight: "600",
+  fontSize: "var(--font-size-sm)",
   cursor: "pointer",
+  color: "var(--color-text-secondary)",
 };
 
 const addButton: React.CSSProperties = {
-  padding: "var(--space-2) var(--space-4)",
+  padding: "var(--space-2) var(--space-8)",
   background: "var(--color-primary)",
   color: "white",
+  border: "none",
   borderRadius: "var(--radius-sm)",
   fontWeight: "600",
+  fontSize: "var(--font-size-sm)",
   cursor: "pointer",
+  boxShadow: "0 4px 12px rgba(0, 102, 204, 0.2)",
 };
 
 const removeBtn: React.CSSProperties = {
-  color: "var(--color-error)",
+  color: "var(--color-text-muted)",
   fontSize: "var(--font-size-xl)",
   background: "none",
   border: "none",
   cursor: "pointer",
   lineHeight: 1,
-  padding: "0 var(--space-1)",
+  padding: "var(--space-1)",
+  transition: "color 0.2s",
 };
 
 const emptyCart: React.CSSProperties = {
   padding: "var(--space-8)",
   textAlign: "center",
-  color: "var(--color-text-secondary)",
+  color: "var(--color-text-muted)",
   background: "var(--color-bg)",
-  borderRadius: "var(--radius-sm)",
+  borderRadius: "var(--radius-md)",
   fontSize: "var(--font-size-sm)",
+  border: "1px dashed var(--color-border)",
 };
 
 const totalRow: React.CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
-  alignItems: "center",
-  padding: "var(--space-3) 0",
+  alignItems: "baseline",
+  padding: "var(--space-2) 0",
 };
 
 const totalLabel: React.CSSProperties = {
   fontSize: "var(--font-size-base)",
-  fontWeight: "500",
+  fontWeight: "600",
   color: "var(--color-text-secondary)",
+  textTransform: "uppercase",
+  letterSpacing: "0.05em",
 };
 
 const totalAmount: React.CSSProperties = {
   fontSize: "var(--font-size-2xl)",
-  fontWeight: "600",
+  fontWeight: "700",
   color: "var(--color-primary)",
 };
 
@@ -995,6 +1039,7 @@ const actionsGrid: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
   gap: "var(--space-3)",
+  marginTop: "var(--space-2)",
 };
 
 const actionsRow: React.CSSProperties = {
@@ -1003,55 +1048,64 @@ const actionsRow: React.CSSProperties = {
 };
 
 const actionButton: React.CSSProperties = {
-  padding: "var(--space-3) var(--space-4)",
+  padding: "var(--space-4)",
   background: "var(--color-primary)",
   color: "white",
+  border: "none",
   borderRadius: "var(--radius-sm)",
-  fontWeight: "600",
+  fontWeight: "700",
   fontSize: "var(--font-size-base)",
   cursor: "pointer",
+  boxShadow: "0 4px 12px rgba(0, 102, 204, 0.2)",
+  textTransform: "uppercase",
+  letterSpacing: "0.03em",
 };
 
 const actionButtonSecondary: React.CSSProperties = {
   flex: 1,
-  padding: "var(--space-3) var(--space-4)",
-  background: "var(--color-navy)",
-  color: "white",
+  padding: "var(--space-3)",
+  background: "var(--color-surface)",
+  color: "var(--color-text)",
+  border: "1px solid var(--color-border)",
   borderRadius: "var(--radius-sm)",
-  fontWeight: "500",
+  fontWeight: "600",
   fontSize: "var(--font-size-sm)",
   cursor: "pointer",
+  transition: "all 0.2s",
 };
 
 const clearButton: React.CSSProperties = {
-  padding: "var(--space-2) var(--space-3)",
+  padding: "var(--space-2) var(--space-4)",
   background: "transparent",
   color: "var(--color-error)",
   border: "1px solid var(--color-error)",
   borderRadius: "var(--radius-sm)",
-  fontSize: "var(--font-size-xs)",
-  fontWeight: "500",
+  fontSize: "11px",
+  fontWeight: "700",
+  textTransform: "uppercase",
   cursor: "pointer",
 };
 
 const discountSection: React.CSSProperties = {
-  padding: "var(--space-3) var(--space-4)",
+  padding: "var(--space-4) var(--space-6)",
   borderBottom: "1px solid var(--color-border)",
   display: "flex",
   alignItems: "center",
-  gap: "var(--space-2)",
+  gap: "var(--space-4)",
+  background: "#fdfdfd",
 };
 
 const discountLabel: React.CSSProperties = {
   fontSize: "var(--font-size-xs)",
-  fontWeight: "600",
+  fontWeight: "700",
   color: "var(--color-text-secondary)",
   textTransform: "uppercase",
-  minWidth: "140px",
+  letterSpacing: "0.05em",
+  flex: 1,
 };
 
 const discountInput: React.CSSProperties = {
-  width: "70px",
+  width: "80px",
   padding: "var(--space-2)",
   fontSize: "var(--font-size-sm)",
   textAlign: "center",
@@ -1059,85 +1113,98 @@ const discountInput: React.CSSProperties = {
   borderRadius: "var(--radius-sm)",
   color: "var(--color-text)",
   background: "var(--color-surface)",
+  fontWeight: "600",
 };
 
 const cartItemCard: React.CSSProperties = {
-  padding: "var(--space-3)",
-  marginBottom: "var(--space-3)",
-  border: "1px solid var(--color-border)",
-  borderRadius: "var(--radius-sm)",
-  background: "var(--color-bg)",
+  padding: "var(--space-4)",
+  marginBottom: "var(--space-4)",
+  borderBottom: "1px solid var(--color-border)",
+  display: "flex",
+  flexDirection: "column",
+  gap: "var(--space-3)",
 };
 
 const cartItemHeader: React.CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "flex-start",
-  marginBottom: "var(--space-2)",
+};
+
+const cartItemName: React.CSSProperties = {
+  fontWeight: "700",
+  fontSize: "var(--font-size-base)",
+  color: "var(--color-text)",
 };
 
 const cartItemMeta: React.CSSProperties = {
   fontSize: "var(--font-size-xs)",
   color: "var(--color-text-secondary)",
+  marginTop: "2px",
+  fontWeight: "500",
 };
 
 const cartItemRow: React.CSSProperties = {
   display: "flex",
-  gap: "var(--space-2)",
+  gap: "var(--space-4)",
   alignItems: "center",
-  marginBottom: "var(--space-2)",
 };
 
 const cartItemLabel: React.CSSProperties = {
   fontSize: "var(--font-size-xs)",
   color: "var(--color-text-secondary)",
-  fontWeight: "500",
-  minWidth: "100px",
+  fontWeight: "600",
+  textTransform: "uppercase",
+  minWidth: "80px",
 };
 
 const cartItemQtyField: React.CSSProperties = {
-  width: "50px",
-  padding: "var(--space-1)",
+  width: "60px",
+  padding: "var(--space-1) var(--space-2)",
   fontSize: "var(--font-size-sm)",
   textAlign: "center",
   border: "1px solid var(--color-border)",
   borderRadius: "var(--radius-sm)",
   color: "var(--color-text)",
   background: "var(--color-surface)",
+  fontWeight: "600",
 };
 
 const cartItemDiscountField: React.CSSProperties = {
-  width: "50px",
-  padding: "var(--space-1)",
+  width: "60px",
+  padding: "var(--space-1) var(--space-2)",
   fontSize: "var(--font-size-sm)",
   textAlign: "center",
   border: "1px solid var(--color-border)",
   borderRadius: "var(--radius-sm)",
   color: "var(--color-text)",
   background: "var(--color-surface)",
+  fontWeight: "600",
 };
 
 const changeButton: React.CSSProperties = {
-  flex: 1,
-  padding: "var(--space-2)",
-  fontSize: "var(--font-size-sm)",
-  background: "var(--color-navy)",
-  color: "white",
-  border: "none",
+  fontSize: "11px",
+  background: "var(--color-bg)",
+  color: "var(--color-text-secondary)",
+  border: "1px solid var(--color-border)",
   borderRadius: "var(--radius-sm)",
+  padding: "var(--space-1) var(--space-3)",
   cursor: "pointer",
-  fontWeight: "500",
+  fontWeight: "600",
+  textTransform: "uppercase",
 };
 
 const cartItemPriceLine: React.CSSProperties = {
-  padding: "var(--space-2)",
-  background: "var(--color-surface)",
-  borderRadius: "var(--radius-sm)",
   textAlign: "right",
-  fontWeight: "600",
+  fontWeight: "700",
   color: "var(--color-primary)",
+  fontSize: "var(--font-size-base)",
 };
 
 const cartItemPriceLabel: React.CSSProperties = {
   fontSize: "var(--font-size-sm)",
+  color: "var(--color-text-secondary)",
+  fontWeight: "500",
+  marginRight: "var(--space-2)",
 };
+

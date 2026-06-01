@@ -1,76 +1,75 @@
 .app {
   display: flex;
-  flex-direction: row; /* Changed to row for sidebar */
+  flex-direction: row;
   height: 100vh;
-  min-width: 900px;
+  min-width: 1000px;
   overflow: hidden;
+  background-color: var(--color-bg);
 }
 
 .sidebar {
-  width: 250px;
+  width: 240px;
   background-color: var(--color-navy);
   color: #ffffff;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  box-shadow: var(--shadow-md);
-  z-index: 10;
+  z-index: 20;
 }
 
 .sidebarHeader {
-  padding: var(--space-6);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: var(--space-6) var(--space-4);
   margin-bottom: var(--space-4);
 }
 
 .wordmark {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: #ffffff;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.02em;
   display: block;
   line-height: 1.2;
+  text-transform: uppercase;
 }
 
 .subtitle {
-  font-size: var(--font-size-xs);
-  color: rgba(255, 255, 255, 0.7);
-  margin-top: 2px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 4px;
   display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .tabs {
   display: flex;
   flex-direction: column;
-  padding: 0 var(--space-3);
-  gap: var(--space-2);
+  padding: 0 var(--space-2);
+  gap: 2px;
 }
 
 .tab {
   padding: var(--space-3) var(--space-4);
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
   font-weight: 500;
   color: rgba(255, 255, 255, 0.7);
   background: transparent;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   text-align: left;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
 }
 
 .tab:hover {
   color: #ffffff;
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(255, 255, 255, 0.08);
 }
 
 .tabActive {
   color: #ffffff;
   background-color: var(--color-primary);
-}
-
-.tabActive:hover {
-  background-color: var(--color-primary-hover);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .mainArea {
@@ -79,7 +78,92 @@
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
-  background-color: var(--color-bg);
+  position: relative;
+}
+
+.topHeader {
+  height: 64px;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-6);
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.orgBadge {
+  background: var(--color-bg);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.headerAction {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.headerAction:hover {
+  color: var(--color-primary);
+}
+
+.profileSection {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-left: var(--space-6);
+  border-left: 1px solid var(--color-border);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  background: var(--color-primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: var(--font-size-xs);
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.userName {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+
+.userEmail {
+  font-size: 11px;
+  color: var(--color-text-muted);
 }
 
 .content {

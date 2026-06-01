@@ -33,36 +33,38 @@
 
   .shop-name {
     font-size: 28px;
-    font-weight: 600;
-    color: #0f172a;
+    font-weight: 700;
+    color: #174f86;
     margin: 0;
-    letter-spacing: 1px;
+    letter-spacing: -0.01em;
   }
 
   .shop-subtitle {
-    font-size: 12px;
-    color: #64748b;
+    font-size: 11px;
+    color: #5e5e5e;
     margin: 4px 0 0 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   .invoice-divider {
-    border-bottom: 2px solid #0f172a;
+    border-bottom: 2px solid #174f86;
     margin: 15px 0;
   }
 
   .invoice-meta {
     display: flex;
     justify-content: space-between;
-    font-size: 12px;
-    color: #0f172a;
+    font-size: 11px;
+    color: #1a1a1a;
   }
 
   .invoice-date {
-    font-weight: 500;
+    font-weight: 600;
   }
 
   .invoice-customer {
-    color: #64748b;
+    color: #5e5e5e;
   }
 
   .invoice-table {
@@ -73,20 +75,20 @@
   }
 
   .invoice-table th {
-    background: #f8fafc;
+    background: #fcfcfc;
     padding: 10px 8px;
     text-align: left;
-    border-bottom: 2px solid #e2e8f0;
-    font-weight: 600;
+    border-bottom: 2px solid #dbe1e8;
+    font-weight: 700;
     text-transform: uppercase;
     font-size: 10px;
-    letter-spacing: 0.5px;
-    color: #64748b;
+    letter-spacing: 0.05px;
+    color: #5e5e5e;
   }
 
   .invoice-table td {
     padding: 10px 8px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #dbe1e8;
   }
 
   .invoice-table th:last-child,
@@ -96,17 +98,17 @@
 
   .invoice-total {
     text-align: right;
-    font-size: 20px;
-    font-weight: 600;
-    color: #0f172a;
+    font-size: 22px;
+    font-weight: 700;
+    color: #174f86;
     padding: 15px 0;
   }
 
   .invoice-footer {
     text-align: center;
-    font-size: 12px;
+    font-size: 11px;
     font-style: italic;
-    color: #64748b;
+    color: #8c8c8c;
     margin-top: 20px;
   }
 }

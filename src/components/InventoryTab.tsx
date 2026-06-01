@@ -421,7 +421,7 @@ export default function InventoryTab() {
 const container: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: "var(--space-4)",
+  gap: "var(--space-6)",
   height: "100%",
 };
 
@@ -432,6 +432,7 @@ const loadingContainer: React.CSSProperties = {
   height: "100%",
   color: "var(--color-text-secondary)",
   fontSize: "var(--font-size-lg)",
+  fontWeight: "500",
 };
 
 const toolbar: React.CSSProperties = {
@@ -444,20 +445,22 @@ const toolbar: React.CSSProperties = {
 
 const pageTitle: React.CSSProperties = {
   fontSize: "var(--font-size-xl)",
-  fontWeight: "600",
+  fontWeight: "700",
   color: "var(--color-text)",
+  letterSpacing: "-0.01em",
 };
 
 const formCard: React.CSSProperties = {
   background: "var(--color-surface)",
-  padding: "var(--space-4)",
+  padding: "var(--space-6)",
   borderRadius: "var(--radius-md)",
+  border: "1px solid var(--color-border)",
   boxShadow: "var(--shadow-sm)",
 };
 
 const addForm: React.CSSProperties = {
   display: "flex",
-  gap: "var(--space-3)",
+  gap: "var(--space-4)",
   alignItems: "flex-end",
   flexWrap: "wrap",
 };
@@ -465,16 +468,17 @@ const addForm: React.CSSProperties = {
 const formField: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: "var(--space-1)",
+  gap: "var(--space-2)",
   flex: "1 1 auto",
-  minWidth: "140px",
+  minWidth: "160px",
 };
 
 const formLabel: React.CSSProperties = {
   fontSize: "var(--font-size-xs)",
-  fontWeight: "600",
+  fontWeight: "700",
   color: "var(--color-text-secondary)",
   textTransform: "uppercase",
+  letterSpacing: "0.05em",
 };
 
 const input: React.CSSProperties = {
@@ -484,21 +488,28 @@ const input: React.CSSProperties = {
   fontSize: "var(--font-size-sm)",
   background: "var(--color-surface)",
   color: "var(--color-text)",
+  transition: "border-color 0.2s",
 };
 
 const primaryButton: React.CSSProperties = {
-  padding: "var(--space-2) var(--space-4)",
+  padding: "var(--space-2) var(--space-6)",
   background: "var(--color-primary)",
   color: "white",
+  border: "none",
   borderRadius: "var(--radius-sm)",
-  fontWeight: "600",
+  fontWeight: "700",
   fontSize: "var(--font-size-sm)",
   whiteSpace: "nowrap",
+  cursor: "pointer",
+  boxShadow: "0 4px 12px rgba(0, 102, 204, 0.2)",
+  textTransform: "uppercase",
+  letterSpacing: "0.03em",
 };
 
 const treeCard: React.CSSProperties = {
   background: "var(--color-surface)",
   borderRadius: "var(--radius-md)",
+  border: "1px solid var(--color-border)",
   boxShadow: "var(--shadow-sm)",
   display: "flex",
   flexDirection: "column",
@@ -508,72 +519,88 @@ const treeCard: React.CSSProperties = {
 };
 
 const treeHeader: React.CSSProperties = {
-  padding: "var(--space-4)",
+  padding: "var(--space-4) var(--space-6)",
   borderBottom: "1px solid var(--color-border)",
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
+  background: "#fcfcfc",
 };
 
 const sectionTitle: React.CSSProperties = {
   fontSize: "var(--font-size-base)",
   fontWeight: "600",
   color: "var(--color-text)",
+  textTransform: "uppercase",
+  letterSpacing: "0.02em",
 };
 
 const itemCount: React.CSSProperties = {
-  fontSize: "var(--font-size-sm)",
+  fontSize: "var(--font-size-xs)",
   color: "var(--color-text-secondary)",
   background: "var(--color-bg)",
   padding: "var(--space-1) var(--space-3)",
   borderRadius: "var(--radius-sm)",
+  fontWeight: "600",
+  border: "1px solid var(--color-border)",
 };
 
 const treeScrollArea: React.CSSProperties = {
   flex: 1,
   overflowY: "auto",
-  padding: "var(--space-3)",
+  padding: "var(--space-6)",
 };
 
 const treeProductSection: React.CSSProperties = {
   marginBottom: "var(--space-4)",
-  borderRadius: "var(--radius-sm)",
+  borderRadius: "var(--radius-md)",
   overflow: "hidden",
   border: "1px solid var(--color-border)",
 };
 
 const treeProductRow: React.CSSProperties = {
-  padding: "var(--space-3) var(--space-4)",
-  background: "var(--color-bg)",
+  padding: "var(--space-4) var(--space-4)",
+  background: "var(--color-surface)",
   cursor: "pointer",
   display: "flex",
   alignItems: "center",
-  gap: "var(--space-2)",
-  fontWeight: "600",
-  transition: "background 0.15s",
+  gap: "var(--space-3)",
+  fontWeight: "700",
+  transition: "all 0.15s",
+  color: "var(--color-text)",
 };
 
 const treeToggle: React.CSSProperties = {
-  color: "var(--color-text-secondary)",
-  fontSize: "var(--font-size-sm)",
+  color: "var(--color-text-muted)",
+  fontSize: "var(--font-size-xs)",
   minWidth: "16px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
 };
 
 const treeProductName: React.CSSProperties = {
   color: "var(--color-text)",
   flex: 1,
+  fontSize: "var(--font-size-base)",
 };
 
 const treeCount: React.CSSProperties = {
   color: "var(--color-text-secondary)",
-  fontSize: "var(--font-size-sm)",
-  fontWeight: "400",
+  fontSize: "var(--font-size-xs)",
+  fontWeight: "500",
+  background: "var(--color-bg)",
+  padding: "2px 8px",
+  borderRadius: "10px",
 };
 
 const treeBrandSection: React.CSSProperties = {
-  padding: "var(--space-3) var(--space-4)",
-  background: "var(--color-surface)",
+  padding: "var(--space-4)",
+  background: "#fafafa",
   borderTop: "1px solid var(--color-border)",
+  display: "flex",
+  flexDirection: "column",
+  gap: "var(--space-4)",
 };
 
 const treeBrandRow: React.CSSProperties = {
@@ -581,76 +608,81 @@ const treeBrandRow: React.CSSProperties = {
   justifyContent: "space-between",
   alignItems: "center",
   padding: "var(--space-2) var(--space-3)",
-  background: "var(--color-bg)",
+  background: "var(--color-surface)",
   borderRadius: "var(--radius-sm)",
-  marginBottom: "var(--space-2)",
-  fontWeight: "500",
+  fontWeight: "700",
+  fontSize: "var(--font-size-xs)",
+  textTransform: "uppercase",
+  letterSpacing: "0.05em",
+  color: "var(--color-primary)",
+  border: "1px solid var(--color-border)",
 };
 
 const treeBrandName: React.CSSProperties = {
-  color: "var(--color-text)",
+  color: "var(--color-primary)",
 };
 
 const treeBrandRemoveBtn: React.CSSProperties = {
   background: "none",
   border: "none",
-  color: "var(--color-error)",
+  color: "var(--color-text-muted)",
   cursor: "pointer",
-  fontSize: "var(--font-size-base)",
+  fontSize: "var(--font-size-xl)",
   padding: "0 var(--space-1)",
   lineHeight: 1,
 };
 
 const treeNoSubModels: React.CSSProperties = {
   padding: "var(--space-2) var(--space-3)",
-  color: "var(--color-text-secondary)",
-  fontSize: "var(--font-size-sm)",
+  color: "var(--color-text-muted)",
+  fontSize: "var(--font-size-xs)",
   fontStyle: "italic",
-  marginBottom: "var(--space-2)",
 };
 
 const treeSubModelRow: React.CSSProperties = {
-  marginBottom: "var(--space-2)",
   paddingLeft: "var(--space-4)",
 };
 
 const treeDisplayRow: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: "var(--space-2)",
-  padding: "var(--space-2) var(--space-3)",
+  gap: "var(--space-4)",
+  padding: "var(--space-3) var(--space-4)",
   background: "var(--color-surface)",
   border: "1px solid var(--color-border)",
   borderRadius: "var(--radius-sm)",
+  transition: "all 0.15s",
 };
 
 const treeSubModelName: React.CSSProperties = {
   flex: 1,
   color: "var(--color-text)",
   fontSize: "var(--font-size-sm)",
+  fontWeight: "500",
 };
 
 const treeSubModelPrice: React.CSSProperties = {
-  color: "var(--color-primary)",
-  fontWeight: "600",
+  color: "var(--color-text)",
+  fontWeight: "700",
   minWidth: "80px",
   textAlign: "right",
+  fontSize: "var(--font-size-sm)",
 };
 
 const treeEditBtn: React.CSSProperties = {
   background: "none",
   border: "none",
   cursor: "pointer",
-  fontSize: "var(--font-size-base)",
-  padding: "var(--space-1)",
+  fontSize: "var(--font-size-sm)",
+  color: "var(--color-text-muted)",
 };
 
 const treeDeleteBtn: React.CSSProperties = {
   background: "none",
   border: "none",
   cursor: "pointer",
-  fontSize: "var(--font-size-base)",
-  padding: "var(--space-1)",
+  fontSize: "var(--font-size-sm)",
+  color: "var(--color-text-muted)",
 };
 
 const treeEditRow: React.CSSProperties = {
@@ -670,6 +702,7 @@ const treeEditInput: React.CSSProperties = {
   fontSize: "var(--font-size-sm)",
   background: "var(--color-surface)",
   color: "var(--color-text)",
+  fontWeight: "600",
 };
 
 const treeSaveBtn: React.CSSProperties = {
@@ -677,36 +710,41 @@ const treeSaveBtn: React.CSSProperties = {
   color: "white",
   border: "none",
   borderRadius: "var(--radius-sm)",
-  padding: "var(--space-1) var(--space-2)",
+  padding: "var(--space-1) var(--space-3)",
   cursor: "pointer",
-  fontSize: "var(--font-size-sm)",
-  fontWeight: "600",
+  fontSize: "var(--font-size-xs)",
+  fontWeight: "700",
+  textTransform: "uppercase",
 };
 
 const treeCancelBtn: React.CSSProperties = {
-  background: "var(--color-border)",
-  color: "var(--color-text)",
-  border: "none",
+  background: "var(--color-surface)",
+  color: "var(--color-text-secondary)",
+  border: "1px solid var(--color-border)",
   borderRadius: "var(--radius-sm)",
-  padding: "var(--space-1) var(--space-2)",
+  padding: "var(--space-1) var(--space-3)",
   cursor: "pointer",
-  fontSize: "var(--font-size-sm)",
+  fontSize: "var(--font-size-xs)",
+  fontWeight: "700",
+  textTransform: "uppercase",
 };
 
 const emptyState: React.CSSProperties = {
   padding: "var(--space-8)",
   textAlign: "center",
-  color: "var(--color-text-secondary)",
+  color: "var(--color-text-muted)",
   background: "var(--color-bg)",
-  borderRadius: "var(--radius-sm)",
+  borderRadius: "var(--radius-md)",
   fontSize: "var(--font-size-sm)",
+  border: "1px dashed var(--color-border)",
 };
 
 const brandCard: React.CSSProperties = {
   background: "var(--color-surface)",
   borderRadius: "var(--radius-md)",
+  border: "1px solid var(--color-border)",
   boxShadow: "var(--shadow-sm)",
-  padding: "var(--space-4)",
+  padding: "var(--space-6)",
 };
 
 const brandToggle: React.CSSProperties = {
@@ -715,57 +753,66 @@ const brandToggle: React.CSSProperties = {
   background: "none",
   border: "none",
   cursor: "pointer",
-  fontWeight: "600",
+  fontWeight: "700",
   display: "flex",
   alignItems: "center",
-  gap: "var(--space-2)",
+  gap: "var(--space-3)",
+  textTransform: "uppercase",
+  letterSpacing: "0.05em",
 };
 
 const brandToggleIcon: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  width: "20px",
-  height: "20px",
+  width: "24px",
+  height: "24px",
   background: "var(--color-bg)",
   borderRadius: "var(--radius-sm)",
-  fontSize: "var(--font-size-base)",
-  fontWeight: "500",
+  fontSize: "var(--font-size-lg)",
+  fontWeight: "600",
+  color: "var(--color-primary)",
 };
 
 const brandPanel: React.CSSProperties = {
-  marginTop: "var(--space-4)",
-  paddingTop: "var(--space-4)",
+  marginTop: "var(--space-6)",
+  paddingTop: "var(--space-6)",
   borderTop: "1px solid var(--color-border)",
   display: "flex",
   flexDirection: "column",
-  gap: "var(--space-4)",
+  gap: "var(--space-6)",
 };
 
 const brandList: React.CSSProperties = {
   display: "flex",
   flexWrap: "wrap",
-  gap: "var(--space-2)",
+  gap: "var(--space-3)",
 };
 
 const brandRow: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
-  gap: "var(--space-2)",
-  padding: "var(--space-2) var(--space-3)",
-  background: "var(--color-bg)",
+  gap: "var(--space-3)",
+  padding: "var(--space-2) var(--space-4)",
+  background: "var(--color-surface)",
   borderRadius: "var(--radius-sm)",
   border: "1px solid var(--color-border)",
+  boxShadow: "var(--shadow-sm)",
 };
 
 const brandName: React.CSSProperties = {
   fontSize: "var(--font-size-sm)",
-  fontWeight: "500",
+  fontWeight: "600",
+  color: "var(--color-text)",
 };
 
 const brandForm: React.CSSProperties = {
   display: "flex",
-  gap: "var(--space-2)",
+  gap: "var(--space-3)",
+  background: "#fcfcfc",
+  padding: "var(--space-4)",
+  borderRadius: "var(--radius-sm)",
+  border: "1px solid var(--color-border)",
 };
 
 const brandInput: React.CSSProperties = {
@@ -774,19 +821,24 @@ const brandInput: React.CSSProperties = {
 };
 
 const smallButton: React.CSSProperties = {
-  padding: "var(--space-2) var(--space-4)",
+  padding: "var(--space-2) var(--space-6)",
   background: "var(--color-navy)",
   color: "white",
+  border: "none",
   borderRadius: "var(--radius-sm)",
-  fontSize: "var(--font-size-sm)",
-  fontWeight: "600",
+  fontSize: "var(--font-size-xs)",
+  fontWeight: "700",
+  textTransform: "uppercase",
+  cursor: "pointer",
 };
 
 const deleteLink: React.CSSProperties = {
-  color: "var(--color-error)",
-  fontSize: "var(--font-size-lg)",
+  color: "var(--color-text-muted)",
+  fontSize: "var(--font-size-xl)",
   background: "none",
   border: "none",
   cursor: "pointer",
   lineHeight: 1,
+  padding: "0",
 };
+
