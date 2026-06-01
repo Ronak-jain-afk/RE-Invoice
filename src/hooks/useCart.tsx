@@ -24,7 +24,6 @@ interface CartContextType {
   cart: CartItem[];
   globalDiscount: number;
   setGlobalDiscount: (v: number) => void;
-  clearGlobalDiscount: () => void;
   addToCart: (item: CartItem) => void;
   removeFromCart: (subModelId: number) => void;
   updateQuantity: (subModelId: number, quantity: number) => void;
@@ -34,7 +33,6 @@ interface CartContextType {
   getEffectiveDiscount: (item: CartItem) => number;
   clearCart: () => void;
   grandTotal: number;
-  totalItems: number;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -75,10 +73,14 @@ function clearSnapshot() {
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [cart, setCart] = useState<CartItem[]>(() => loadSnapshot()?.cart ?? []);
-  const [globalDiscount, setGlobalDiscount] = useState<number>(
-    () => loadSnapshot()?.globalDiscount ?? 0
-  );
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    const snapshot = loadSnapshot();
+    return snapshot?.cart ?? [];
+  });
+  const [globalDiscount, setGlobalDiscount] = useState<number>(() => {
+    const snapshot = loadSnapshot();
+    return snapshot?.globalDiscount ?? 0;
+  });
   const saveTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -146,8 +148,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     clearSnapshot();
   }, []);
 
-  const clearGlobalDiscount = useCallback(() => setGlobalDiscount(0), []);
-
   const getEffectiveDiscount = useCallback(
     (item: CartItem): number =>
       item.discount > 0 ? item.discount : globalDiscount,
@@ -165,18 +165,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [cart, getEffectiveDiscount]
   );
 
-  const totalItems = useMemo(
-    () => cart.reduce((sum, c) => sum + c.quantity, 0),
-    [cart]
-  );
-
   return (
     <CartContext.Provider
       value={{
         cart,
         globalDiscount,
         setGlobalDiscount,
-        clearGlobalDiscount,
         addToCart,
         removeFromCart,
         updateQuantity,
@@ -186,7 +180,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         getEffectiveDiscount,
         clearCart,
         grandTotal,
-        totalItems,
       }}
     >
       {children}

@@ -1,4 +1,4 @@
-import { useState, useCallback, createContext, useContext, ReactNode } from "react";
+import { useState, useCallback, useRef, createContext, useContext, ReactNode } from "react";
 
 type ToastType = "success" | "error" | "info";
 
@@ -16,9 +16,10 @@ const ToastContext = createContext<ToastContextType | null>(null);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const nextIdRef = useRef(0);
 
   const showToast = useCallback((message: string, type: ToastType = "success") => {
-    const id = Date.now();
+    const id = ++nextIdRef.current;
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));

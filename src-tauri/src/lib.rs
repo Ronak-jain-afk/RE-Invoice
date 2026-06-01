@@ -30,7 +30,12 @@ fn wsl_path(dir: &str) -> PathBuf {
 #[tauri::command]
 fn save_pdf(dir: String, filename: String, bytes: Vec<u8>) -> Result<String, String> {
     let normalized_dir = wsl_path(&dir);
-    let path = normalized_dir.join(&filename);
+    // Sanitize filename: strip path separators and parent-dir references
+    let safe_name: String = filename
+        .chars()
+        .filter(|&c| c.is_alphanumeric() || c == '-' || c == '_' || c == '.')
+        .collect();
+    let path = normalized_dir.join(&safe_name);
 
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|e| e.to_string())?;

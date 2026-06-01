@@ -10,6 +10,7 @@ type Tab = "billing" | "inventory" | "settings";
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>("billing");
+  const [shopName, setShopName] = useState(() => localStorage.getItem("shopName") || "");
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
@@ -18,13 +19,18 @@ function App() {
     }
   }, []);
 
+  // Re-read shop name when switching tabs (user may have changed it in Settings)
+  useEffect(() => {
+    setShopName(localStorage.getItem("shopName") || "");
+  }, [activeTab]);
+
   return (
     <ToastProvider>
       <CartProvider>
       <div className={styles.app}>
         <aside className={styles.sidebar}>
           <div className={styles.sidebarHeader}>
-            <span className={styles.wordmark}>Ronak Electricals</span>
+            <span className={styles.wordmark}>{shopName || "My Shop"}</span>
             <span className={styles.subtitle}>Billing & Inventory</span>
           </div>
           <nav className={styles.tabs}>
@@ -50,22 +56,6 @@ function App() {
         </aside>
         
         <div className={styles.mainArea}>
-          <header className={styles.topHeader}>
-            <div className={styles.headerLeft}>
-              <div className={styles.orgBadge}>Ronak Electricals</div>
-            </div>
-            <div className={styles.headerRight}>
-              <div className={styles.headerAction}>Getting started</div>
-              <div className={styles.profileSection}>
-                <div className={styles.avatar}>RE</div>
-                <div className={styles.userInfo}>
-                  <span className={styles.userName}>Ronak</span>
-                  <span className={styles.userEmail}>admin@ronakelectricals.com</span>
-                </div>
-              </div>
-            </div>
-          </header>
-          
           <main className={styles.content}>
             {activeTab === "billing" && <BillingTab />}
             {activeTab === "inventory" && <InventoryTab />}

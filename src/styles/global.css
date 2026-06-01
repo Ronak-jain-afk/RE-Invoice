@@ -114,6 +114,16 @@ input, button, select, textarea {
   color: inherit;
 }
 
+select {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+select option {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
 button {
   cursor: pointer;
   border: none;

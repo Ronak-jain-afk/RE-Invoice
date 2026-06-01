@@ -8,6 +8,9 @@ interface InvoicePreviewProps {
   globalDiscount?: number;
   getEffectiveDiscount?: (item: CartItem) => number;
   invoiceNumber?: number | null;
+  shopName?: string;
+  shopPhone?: string;
+  shopAddress?: string;
 }
 
 export default function InvoicePreview({
@@ -18,6 +21,9 @@ export default function InvoicePreview({
   globalDiscount = 0,
   getEffectiveDiscount,
   invoiceNumber,
+  shopName,
+  shopPhone,
+  shopAddress,
 }: InvoicePreviewProps) {
   const calculateSubtotal = () => {
     return cart.reduce((sum, c) => sum + c.price * c.quantity, 0);
@@ -53,25 +59,26 @@ export default function InvoicePreview({
         <div className="brand-block">
           <div className="brand-logo-placeholder" />
           <div className="brand-name-container">
-            <span className="brand-name-main">Ronak Electricals</span>
-            <span className="brand-name-sub">Electrical Goods & Accessories</span>
+            <span className="brand-name-main">{shopName || "Ronak Electricals"}</span>
+            {shopPhone && <span className="brand-detail">📞 {shopPhone}</span>}
+            {shopAddress && <span className="brand-detail">📍 {shopAddress}</span>}
           </div>
         </div>
-        <div className="invoice-label-large">Invoice</div>
+        <div className="invoice-label-large">INVOICE</div>
       </div>
 
       {/* Meta Information */}
       <div className="invoice-meta-section">
         <div className="customer-info-block">
-          <div className="customer-name-bold">{customerName || "Walking Customer"}</div>
+          {customerName && <div className="customer-name-bold">{customerName}</div>}
           <div className="meta-detail-text">Date: {formatDate(date)}</div>
           {customerMobile && <div className="meta-detail-text">Phone: +91 {customerMobile}</div>}
-          <div className="meta-detail-text">Address: Local Market, Main Road, City</div>
         </div>
-        <div className="invoice-id-block">
-          <div className="id-label">Invoice</div>
-          <div className="id-value">{invLabel}</div>
-        </div>
+        {invoiceNumber && (
+          <div className="invoice-id-block">
+            <div className="id-value">{invLabel}</div>
+          </div>
+        )}
       </div>
 
       {/* Items Table */}
@@ -95,7 +102,7 @@ export default function InvoicePreview({
               <tr key={c.sub_model_id}>
                 <td>
                   <div style={{ fontWeight: 700 }}>{c.base_name}</div>
-                  <div style={{ fontSize: "9px", color: "#5e5e5e" }}>
+                  <div style={{ fontSize: "8px", color: "#5e5e5e" }}>
                     {c.brand_name} / {c.sub_model_name}
                   </div>
                 </td>
@@ -108,57 +115,27 @@ export default function InvoicePreview({
         </tbody>
       </table>
 
-      {/* Bottom Summary */}
-      <div className="invoice-bottom-grid">
-        <div className="payment-info-block">
-          <div className="payment-title">Payment Data:</div>
-          <div className="payment-detail">Method: Cash / UPI</div>
-          <div className="payment-detail">Status: Paid</div>
+      {/* Totals */}
+      <div className="invoice-totals">
+        <div className="total-row-item">
+          <span className="label">Subtotal</span>
+          <span>₹{subtotal.toFixed(2)}</span>
         </div>
-        <div className="totals-block">
+        {totalDiscount > 0 && (
           <div className="total-row-item">
-            <span className="label">Subtotal</span>
-            <span>₹{subtotal.toFixed(2)}</span>
+            <span className="label">Discount</span>
+            <span>- ₹{totalDiscount.toFixed(2)}</span>
           </div>
-          {totalDiscount > 0 && (
-            <div className="total-row-item">
-              <span className="label">Discount</span>
-              <span>- ₹{totalDiscount.toFixed(2)}</span>
-            </div>
-          )}
-          <div className="total-row-item grand">
-            <span className="label">Total</span>
-            <span>₹{grandTotal.toFixed(2)}</span>
-          </div>
+        )}
+        <div className="total-row-item grand">
+          <span className="label">Total</span>
+          <span>₹{grandTotal.toFixed(2)}</span>
         </div>
       </div>
 
-      {/* Terms */}
-      <div className="terms-section">
-        <div className="terms-title">Terms and Conditions</div>
-        <div className="terms-text">
-          Goods once sold will not be taken back or exchanged. Please check the items before leaving the counter. 
-          Warranty as per manufacturer terms. This is a computer generated invoice.
-        </div>
-      </div>
-
-      {/* Absolute Footer */}
-      <div className="absolute-footer-bar">
-        <div className="footer-contact-item">
-          <div className="footer-icon-circle">☏</div>
-          +91-9876543210
-        </div>
-        <div className="footer-contact-item">
-          <div className="footer-icon-circle">@</div>
-          contact@ronakelectricals.com
-        </div>
-        <div className="footer-contact-item">
-          <div className="footer-icon-circle">📍</div>
-          Main Road, City, ST 12345
-        </div>
-        <div className="decorative-bottom-shape">
-          <div className="red-accent-shape" />
-        </div>
+      {/* Footer */}
+      <div className="invoice-footer-text">
+        Thank you for your purchase!
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useItems, Brand, BrandVariant, SubModelVariant } from "../hooks/useItems";
 import { useToast } from "../hooks/useToast.tsx";
 
@@ -228,14 +228,17 @@ export default function InventoryTab() {
     setExpandedProducts(newExpanded);
   };
 
-  // Group brand variants by product
-  const productGroups = new Map<number, BrandVariant[]>();
-  for (const bv of brandVariants) {
-    if (!productGroups.has(bv.base_id)) {
-      productGroups.set(bv.base_id, []);
+  // Group brand variants by product (memoized)
+  const productGroups = useMemo(() => {
+    const groups = new Map<number, BrandVariant[]>();
+    for (const bv of brandVariants) {
+      if (!groups.has(bv.base_id)) {
+        groups.set(bv.base_id, []);
+      }
+      groups.get(bv.base_id)!.push(bv);
     }
-    productGroups.get(bv.base_id)!.push(bv);
-  }
+    return groups;
+  }, [brandVariants]);
 
   if (loading) return <div style={loadingContainer}>Loading inventory...</div>;
 
@@ -593,7 +596,7 @@ const treeHeader: React.CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  background: "#fcfcfc",
+  background: "var(--color-surface)",
 };
 
 const sectionTitle: React.CSSProperties = {
@@ -665,7 +668,7 @@ const treeCount: React.CSSProperties = {
 
 const treeBrandSection: React.CSSProperties = {
   padding: "var(--space-4)",
-  background: "#fafafa",
+  background: "var(--color-surface)",
   borderTop: "1px solid var(--color-border)",
   display: "flex",
   flexDirection: "column",
@@ -878,7 +881,7 @@ const brandName: React.CSSProperties = {
 const brandForm: React.CSSProperties = {
   display: "flex",
   gap: "var(--space-3)",
-  background: "#fcfcfc",
+  background: "var(--color-surface)",
   padding: "var(--space-4)",
   borderRadius: "var(--radius-sm)",
   border: "1px solid var(--color-border)",

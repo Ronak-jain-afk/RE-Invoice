@@ -9,6 +9,9 @@ interface InvoicePreviewModalProps {
   globalDiscount: number;
   getEffectiveDiscount: (item: CartItem) => number;
   invoiceNumber?: number | null;
+  shopName?: string;
+  shopPhone?: string;
+  shopAddress?: string;
   onClose: () => void;
   onPrint: () => void;
 }
@@ -21,6 +24,9 @@ export default function InvoicePreviewModal({
   globalDiscount,
   getEffectiveDiscount,
   invoiceNumber,
+  shopName,
+  shopPhone,
+  shopAddress,
   onClose,
   onPrint,
 }: InvoicePreviewModalProps) {
@@ -42,6 +48,9 @@ export default function InvoicePreviewModal({
               globalDiscount={globalDiscount}
               getEffectiveDiscount={getEffectiveDiscount}
               invoiceNumber={invoiceNumber}
+              shopName={shopName}
+              shopPhone={shopPhone}
+              shopAddress={shopAddress}
             />
           </div>
         </div>
@@ -74,7 +83,7 @@ const overlay: React.CSSProperties = {
 const modal: React.CSSProperties = {
   background: "var(--color-surface)",
   borderRadius: "var(--radius-md)",
-  width: "720px",
+  width: "620px",
   maxHeight: "90vh",
   display: "flex",
   flexDirection: "column",

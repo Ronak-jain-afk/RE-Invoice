@@ -108,21 +108,29 @@ impl Database {
             [],
         )?;
 
-        // Rebuild FTS if needed (repopulate from item_bases)
-        let _ = conn.execute("DELETE FROM item_bases_fts", []);
+        // Only rebuild FTS if empty (avoids unnecessary DELETE+INSERT on every launch)
+        let fts_count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM item_bases_fts", [], |row| row.get(0))
+            .unwrap_or(0);
+        let item_count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM item_bases", [], |row| row.get(0))
+            .unwrap_or(0);
 
-        let mut stmt = conn.prepare("SELECT id, name FROM item_bases")?;
-        let mut rows = stmt.query([])?;
-        while let Some(row) = rows.next()? {
-            let id: i64 = row.get(0)?;
-            let name: String = row.get(1)?;
-            conn.execute(
-                "INSERT INTO item_bases_fts(rowid, name) VALUES (?1, ?2)",
-                rusqlite::params![id, name],
-            )?;
+        if fts_count == 0 || fts_count < item_count {
+            let _ = conn.execute("DELETE FROM item_bases_fts", []);
+            let mut stmt = conn.prepare("SELECT id, name FROM item_bases")?;
+            let mut rows = stmt.query([])?;
+            while let Some(row) = rows.next()? {
+                let id: i64 = row.get(0)?;
+                let name: String = row.get(1)?;
+                conn.execute(
+                    "INSERT INTO item_bases_fts(rowid, name) VALUES (?1, ?2)",
+                    rusqlite::params![id, name],
+                )?;
+            }
+            drop(rows);
+            drop(stmt);
         }
-        drop(rows);
-        drop(stmt);
 
         conn.execute(
             "CREATE TRIGGER IF NOT EXISTS item_bases_ai AFTER INSERT ON item_bases BEGIN
@@ -299,56 +307,62 @@ pub fn delete_brand(db: tauri::State<Database>, id: i64) -> Result<(), String> {
 pub fn get_brand_variants(db: tauri::State<Database>) -> Result<Vec<BrandVariant>, String> {
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
 
-    // Get all brand variants
+    // Single query: JOIN brand_variants with sub_model_variants, group in Rust
     let mut stmt = conn
         .prepare(
-            "SELECT bv.id, bv.base_id, ib.name, bv.brand_id, b.name
+            "SELECT bv.id, bv.base_id, ib.name, bv.brand_id, b.name,
+                    sm.id, sm.brand_variant_id, sm.name, sm.price
              FROM brand_variants bv
              JOIN item_bases ib ON bv.base_id = ib.id
              LEFT JOIN brands b ON bv.brand_id = b.id
-             ORDER BY ib.name, b.name",
+             LEFT JOIN sub_model_variants sm ON sm.brand_variant_id = bv.id
+             ORDER BY ib.name, b.name, sm.name",
         )
         .map_err(|e| e.to_string())?;
 
-    let brand_variants: Vec<BrandVariant> = stmt
+    let rows = stmt
         .query_map([], |row| {
-            Ok(BrandVariant {
-                id: row.get(0)?,
-                base_id: row.get(1)?,
-                base_name: row.get(2)?,
-                brand_id: row.get(3)?,
-                brand_name: row.get(4)?,
-                sub_models: vec![],
-            })
+            Ok((
+                row.get::<_, i64>(0)?,   // bv.id
+                row.get::<_, i64>(1)?,   // bv.base_id
+                row.get::<_, String>(2)?, // ib.name
+                row.get::<_, Option<i64>>(3)?, // bv.brand_id
+                row.get::<_, Option<String>>(4)?, // b.name
+                row.get::<_, Option<i64>>(5)?,   // sm.id
+                row.get::<_, Option<i64>>(6)?,   // sm.brand_variant_id
+                row.get::<_, Option<String>>(7)?, // sm.name
+                row.get::<_, Option<f64>>(8)?,   // sm.price
+            ))
         })
         .map_err(|e| e.to_string())?
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| e.to_string())?;
 
-    drop(stmt);
-
-    // For each brand_variant, fetch sub-models
-    let mut result = Vec::new();
-    for mut bv in brand_variants {
-        let mut sub_stmt = conn
-            .prepare("SELECT id, brand_variant_id, name, price FROM sub_model_variants WHERE brand_variant_id = ?1 ORDER BY name")
-            .map_err(|e| e.to_string())?;
-
-        let sub_models: Vec<SubModelVariant> = sub_stmt
-            .query_map([bv.id], |row| {
-                Ok(SubModelVariant {
-                    id: row.get(0)?,
-                    brand_variant_id: row.get(1)?,
-                    name: row.get(2)?,
-                    price: row.get(3)?,
-                })
-            })
-            .map_err(|e| e.to_string())?
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| e.to_string())?;
-
-        bv.sub_models = sub_models;
-        result.push(bv);
+    // Group rows by brand_variant id
+    let mut result: Vec<BrandVariant> = Vec::new();
+    let mut current_id: Option<i64> = None;
+    for (bv_id, base_id, base_name, brand_id, brand_name, sm_id, _sm_bv_id, sm_name, sm_price) in rows {
+        if current_id != Some(bv_id) {
+            result.push(BrandVariant {
+                id: bv_id,
+                base_id,
+                base_name: base_name.clone(),
+                brand_id,
+                brand_name: brand_name.clone(),
+                sub_models: vec![],
+            });
+            current_id = Some(bv_id);
+        }
+        if let (Some(sid), Some(sname), Some(sprice)) = (sm_id, sm_name, sm_price) {
+            if let Some(bv) = result.last_mut() {
+                bv.sub_models.push(SubModelVariant {
+                    id: sid,
+                    brand_variant_id: bv_id,
+                    name: sname,
+                    price: sprice,
+                });
+            }
+        }
     }
 
     Ok(result)
@@ -516,7 +530,15 @@ pub fn search_items(db: tauri::State<Database>, query: String) -> Result<Vec<Sea
 
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
 
-    let search_query = format!("{}*", query.replace('"', "\"\""));
+    // Strip FTS5 special chars to prevent syntax errors; keep alphanumeric, spaces, dots, dashes
+    let sanitized: String = query
+        .chars()
+        .filter(|&c| c.is_alphanumeric() || c.is_whitespace() || c == '.' || c == '-')
+        .collect();
+    if sanitized.trim().is_empty() {
+        return Ok(vec![]);
+    }
+    let search_query = format!("{}*", sanitized);
 
     let mut stmt = conn
         .prepare(
@@ -554,57 +576,63 @@ pub fn get_product_details(
 ) -> Result<Vec<BrandVariant>, String> {
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
 
-    // Get all brand variants for this base
+    // Single JOIN query, group in Rust (avoids N+1)
     let mut stmt = conn
         .prepare(
-            "SELECT bv.id, bv.base_id, ib.name, bv.brand_id, b.name
+            "SELECT bv.id, bv.base_id, ib.name, bv.brand_id, b.name,
+                    sm.id, sm.brand_variant_id, sm.name, sm.price
              FROM brand_variants bv
              JOIN item_bases ib ON bv.base_id = ib.id
              LEFT JOIN brands b ON bv.brand_id = b.id
+             LEFT JOIN sub_model_variants sm ON sm.brand_variant_id = bv.id
              WHERE bv.base_id = ?1
-             ORDER BY b.name",
+             ORDER BY b.name, sm.name",
         )
         .map_err(|e| e.to_string())?;
 
-    let brand_variants: Vec<BrandVariant> = stmt
+    let rows = stmt
         .query_map([baseId], |row| {
-            Ok(BrandVariant {
-                id: row.get(0)?,
-                base_id: row.get(1)?,
-                base_name: row.get(2)?,
-                brand_id: row.get(3)?,
-                brand_name: row.get(4)?,
-                sub_models: vec![],
-            })
+            Ok((
+                row.get::<_, i64>(0)?,
+                row.get::<_, i64>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, Option<i64>>(3)?,
+                row.get::<_, Option<String>>(4)?,
+                row.get::<_, Option<i64>>(5)?,
+                row.get::<_, Option<i64>>(6)?,
+                row.get::<_, Option<String>>(7)?,
+                row.get::<_, Option<f64>>(8)?,
+            ))
         })
         .map_err(|e| e.to_string())?
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| e.to_string())?;
 
-    drop(stmt);
-
-    // For each brand_variant, fetch sub-models
-    let mut result = Vec::new();
-    for mut bv in brand_variants {
-        let mut sub_stmt = conn
-            .prepare("SELECT id, brand_variant_id, name, price FROM sub_model_variants WHERE brand_variant_id = ?1 ORDER BY name")
-            .map_err(|e| e.to_string())?;
-
-        let sub_models: Vec<SubModelVariant> = sub_stmt
-            .query_map([bv.id], |row| {
-                Ok(SubModelVariant {
-                    id: row.get(0)?,
-                    brand_variant_id: row.get(1)?,
-                    name: row.get(2)?,
-                    price: row.get(3)?,
-                })
-            })
-            .map_err(|e| e.to_string())?
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| e.to_string())?;
-
-        bv.sub_models = sub_models;
-        result.push(bv);
+    // Group rows by brand_variant id
+    let mut result: Vec<BrandVariant> = Vec::new();
+    let mut current_id: Option<i64> = None;
+    for (bv_id, base_id, base_name, brand_id, brand_name, sm_id, _sm_bv_id, sm_name, sm_price) in rows {
+        if current_id != Some(bv_id) {
+            result.push(BrandVariant {
+                id: bv_id,
+                base_id,
+                base_name: base_name.clone(),
+                brand_id,
+                brand_name: brand_name.clone(),
+                sub_models: vec![],
+            });
+            current_id = Some(bv_id);
+        }
+        if let (Some(sid), Some(sname), Some(sprice)) = (sm_id, sm_name, sm_price) {
+            if let Some(bv) = result.last_mut() {
+                bv.sub_models.push(SubModelVariant {
+                    id: sid,
+                    brand_variant_id: bv_id,
+                    name: sname,
+                    price: sprice,
+                });
+            }
+        }
     }
 
     Ok(result)
@@ -614,10 +642,10 @@ pub fn get_product_details(
 pub fn backup_database(db: tauri::State<Database>, destPath: String) -> Result<(), String> {
     use std::fs;
     let db_path = db.path.clone();
-    let conn = db.conn.lock().map_err(|e| e.to_string())?;
-    conn.execute("BEGIN IMMEDIATE", []).map_err(|e| e.to_string())?;
-    conn.execute("ROLLBACK", []).map_err(|e| e.to_string())?;
-    drop(conn);
+    // Flush WAL to main file; ignore failure (e.g. active tx)
+    if let Ok(conn) = db.conn.lock() {
+        let _ = conn.execute("CHECKPOINT", []);
+    }
     fs::copy(&db_path, &destPath).map_err(|e| e.to_string())?;
     Ok(())
 }
@@ -626,25 +654,36 @@ pub fn backup_database(db: tauri::State<Database>, destPath: String) -> Result<(
 pub fn restore_database(db: tauri::State<Database>, srcPath: String) -> Result<(), String> {
     use std::fs;
     let db_path = db.path.clone();
+    let src = PathBuf::from(&srcPath);
 
-    // 1. Replace current connection with a temporary in-memory one (drops the old)
-    let temp_conn = Connection::open_in_memory().map_err(|e| e.to_string())?;
-    {
-        let mut conn = db.conn.lock().map_err(|e| e.to_string())?;
-        *conn = temp_conn;
+    if !src.exists() {
+        return Err("Backup file not found".to_string());
     }
 
-    // 2. Copy backup over the current DB file
-    fs::copy(&srcPath, &db_path).map_err(|e| e.to_string())?;
+    // Stage backup to a temp file alongside the main DB
+    let tmp_path = db_path.with_extension("db.restore_tmp");
+    fs::copy(&src, &tmp_path).map_err(|e| format!("Failed to stage backup: {}", e))?;
 
-    // 3. Reopen connection to the restored DB
-    let new_conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
+    // Open connection to staged backup (validates it is a valid SQLite db)
+    let new_conn = Connection::open(&tmp_path).map_err(|e| {
+        let _ = fs::remove_file(&tmp_path);
+        format!("Invalid backup file: {}", e)
+    })?;
+
+    // Atomically swap the connection — old connection is dropped here
     {
         let mut conn = db.conn.lock().map_err(|e| e.to_string())?;
         *conn = new_conn;
     }
 
-    // 4. Re-init schema (CREATE TABLE IF NOT EXISTS + FTS rebuild)
+    // Persist: overwrite the actual DB file for future launches
+    if let Err(e) = fs::copy(&tmp_path, &db_path) {
+        let _ = fs::remove_file(&tmp_path);
+        return Err(format!("Failed to persist restored database: {}", e));
+    }
+    let _ = fs::remove_file(&tmp_path);
+
+    // Re-init schema (CREATE TABLE IF NOT EXISTS is idempotent)
     db.init().map_err(|e| e.to_string())?;
 
     Ok(())

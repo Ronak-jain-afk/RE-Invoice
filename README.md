@@ -1,46 +1,82 @@
-# Ronak Electricals
+# Ronak Electricals — Billing & Inventory
 
-A local-first desktop application for inventory management, billing, and invoice generation — built for **Ronak Electricals**.
+Desktop app for inventory management, billing, and invoice generation at **Ronak Electricals**. Built with Tauri v2 + React 18.
 
-## Tech Stack
+## Tech
 
-| Layer | Technology |
-|-------|-----------|
-| Desktop shell | Tauri v2 (Rust) |
+| Layer | Choice |
+|-------|--------|
+| Shell | Tauri v2 (Rust) |
 | Frontend | React 18 + Vite 5 + TypeScript |
-| Database | SQLite via rusqlite (Rust) |
-| Styling | CSS Modules |
-| PDF | @react-pdf/renderer |
-| Date | dayjs |
+| Database | SQLite via `rusqlite` (Rust) with FTS5 search |
+| Styling | CSS Modules (no Tailwind, no MUI) |
+| PDF | `@react-pdf/renderer` (client-side) |
+| Print | Native `window.print()` |
+| Date | `dayjs` + `worldtimeapi.org` fetch with fallback |
 
 ## Features
 
-- **Inventory Management** — Hierarchical product management: Product → Brand Variant → Sub-model with inline price editing
-- **Billing** — Search products, select brand/sub-model variants, apply global or per-item discounts
-- **Brand Switching** — Change a cart item's brand/sub-model while preserving quantity and discount
-- **Invoice & PDF Export** — Generate A4/A5 PDF invoices or print directly
-- **Dark Mode** — Built-in theme toggle
-- **Offline-first** — No backend, no cloud, fully local
+- **Inventory** — Hierarchical products (Product → Brand → Sub-model) with inline editing
+- **Billing** — FTS5-powered search, brand/sub-model variant picker, per-item & global discounts, cart snapshots
+- **Invoice** — A4/A5 PDF export with `@react-pdf/renderer`, native print with print-specific CSS
+- **Dark mode** — CSS custom properties theming
+- **Backup/Restore** — Full SQLite database backup & restore from Settings
+- **Invoice numbering** — Auto-incrementing sequential numbers, persisted in DB
+- **Offline-first** — Zero backend, zero cloud, fully local
 
-## Development
+## Quick start
 
 ```bash
-# Install dependencies
 npm install
-
-# Start dev server with hot reload
-npm run tauri dev
-
-# Build production binary
-npm run tauri build
+npm run tauri dev     # dev with hot reload
+npm run tauri build   # production binary
 ```
 
-## Database
+## System requirements
 
-SQLite database is auto-created at the app data directory. Schema is initialized on every launch with `CREATE TABLE IF NOT EXISTS`. Existing data is automatically migrated when schema changes.
+- Node.js 18+
+- Rust 1.77+
+- Tauri v2 system deps (webkit2gtk, etc.)
 
 ## Architecture
 
-- All database access goes through Rust Tauri commands (`#[tauri::command]`)
-- Cart state is in-memory only (no persistence to DB)
-- No external backend, no cloud services, no authentication
+```
+┌─────────────────────────────────────────┐
+│  React 18 (Vite)                        │
+│  ┌──────────┐ ┌──────────┐ ┌─────────┐ │
+│  │ Billing  │ │Inventory │ │Settings │ │
+│  └────┬─────┘ └────┬─────┘ └────┬────┘ │
+│       │            │            │       │
+│  ┌────┴────────────┴────────────┴────┐  │
+│  │  invoke() → Tauri Commands (Rust) │  │
+│  └────────────────┬──────────────────┘  │
+│                   │                     │
+└───────────────────┼─────────────────────┘
+                    │
+          ┌─────────┴──────────┐
+          │  SQLite (rusqlite) │
+          └────────────────────┘
+```
+
+- **All DB access through Rust.** No JS SQLite library.
+- **Cart is in-memory only** (`useState`), persisted to `localStorage` as a debounced snapshot.
+- **No ORM.** Raw `rusqlite` queries.
+- **No Redux/Zustand.** Only React built-in state.
+
+## Keyboard shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+P` | Print invoice |
+| `Ctrl+N` | Clear cart |
+| `Ctrl+F` | Focus search |
+| `Ctrl+D` | Focus global discount |
+| `Escape` | Close modals / search results |
+
+## Database
+
+Auto-created at platform app-data directory. Schema initialized with `CREATE TABLE IF NOT EXISTS` on every launch. Migrations handled in Rust (`init_fts`, `migrate_old_items`).
+
+## License
+
+MIT

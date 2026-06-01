@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { flushSync } from "react-dom";
 import { invoke } from "@tauri-apps/api/core";
 import { useItems, BrandVariant, SearchResult } from "../hooks/useItems";
 import { useCartContext, CartItem } from "../hooks/useCart";
@@ -9,6 +10,39 @@ import InvoicePreviewModal from "./InvoicePreviewModal";
 import "../styles/InvoicePreview.css";
 import { pdf } from "@react-pdf/renderer";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+
+const pdfStylesConst = StyleSheet.create({
+  page: { padding: 20, fontFamily: "Helvetica", backgroundColor: "white", color: "#1a1a18" },
+  topSection: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 14 },
+  brandBlock: { flexDirection: "row", alignItems: "center", gap: 6 },
+  logoPlaceholder: { width: 24, height: 24, backgroundColor: "#1a3c5e", marginRight: 6 },
+  brandNameContainer: { flexDirection: "column" },
+  brandNameMain: { fontSize: 14, fontWeight: "bold", textTransform: "uppercase" },
+  invoiceLabelLarge: { fontSize: 18, fontWeight: "bold", letterSpacing: 1 },
+
+  metaSection: { borderTopWidth: 1, borderTopColor: "#dbe1e8", paddingTop: 8, marginBottom: 10, flexDirection: "row", justifyContent: "space-between" },
+  customerInfo: { flexDirection: "column" },
+  customerNameBold: { fontSize: 12, fontWeight: "bold", marginBottom: 1 },
+  metaText: { fontSize: 9, color: "#6b6b68", marginBottom: 1 },
+  idBlock: { textAlign: "right" },
+  idValue: { fontSize: 14, fontWeight: "bold", letterSpacing: 1 },
+
+  table: { marginBottom: 10 },
+  tableHeader: { flexDirection: "row", backgroundColor: "#1a3c5e", padding: 6 },
+  headerText: { fontSize: 8, fontWeight: "bold", color: "white", textTransform: "uppercase" },
+  tableRow: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: "#e2e0db", padding: 6 },
+  tableRowEven: { backgroundColor: "#f8f8f6" },
+  cellText: { fontSize: 9 },
+  cellSubText: { fontSize: 7, color: "#6b6b68", marginTop: 1 },
+
+  totalsBlock: { width: 180, marginLeft: "auto" },
+  totalRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 2 },
+  totalLabel: { fontSize: 9, color: "#6b6b68", textTransform: "uppercase" },
+  grandTotalRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 4, borderTopWidth: 1, borderTopColor: "#1a1a18", paddingTop: 4 },
+  grandTotalText: { fontSize: 14, fontWeight: "bold" },
+
+  footerText: { textAlign: "center", fontSize: 9, color: "#6b6b68", marginTop: "auto", paddingTop: 6, borderTopWidth: 1, borderTopColor: "#e2e0db" },
+});
 
 export default function BillingTab() {
   const { searchItems, getProductDetails, claimInvoiceNumber } = useItems();
@@ -32,6 +66,11 @@ export default function BillingTab() {
   // Invoice numbering
   const [invoiceNumber, setInvoiceNumber] = useState<number | null>(null);
 
+  // Configurable shop details (read once, never re-written from this tab)
+  const [shopName] = useState(() => localStorage.getItem("shopName") || "Ronak Electricals");
+  const [shopPhone] = useState(() => localStorage.getItem("shopPhone") || "");
+  const [shopAddress] = useState(() => localStorage.getItem("shopAddress") || "");
+
   // Refs for keyboard shortcuts (refs avoid stale closure over handlers)
   const discountRef = useRef<HTMLInputElement>(null);
   const printRef = useRef<() => void>(() => {});
@@ -54,54 +93,7 @@ export default function BillingTab() {
   const [changeBrandVariantId, setChangeBrandVariantId] = useState<number | null>(null);
   const [changeSubModelNewId, setChangeSubModelNewId] = useState<number | null>(null);
 
-  const pdfStyles = StyleSheet.create({
-    page: { padding: 40, fontFamily: "Helvetica", backgroundColor: "white", color: "#2b303a" },
-    topSection: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 30 },
-    brandBlock: { flexDirection: "row", alignItems: "center" },
-    logoPlaceholder: { width: 30, height: 30, backgroundColor: "#174f86", marginRight: 10 },
-    brandNameContainer: { flexDirection: "column" },
-    brandNameMain: { fontSize: 18, fontWeight: "bold", textTransform: "uppercase" },
-    brandNameSub: { fontSize: 9, color: "#5e5e5e" },
-    invoiceLabelLarge: { fontSize: 40, fontWeight: "bold", color: "#e11d48", textTransform: "uppercase" },
-    
-    metaSection: { borderTopWidth: 2, borderTopColor: "#2b303a", paddingTop: 15, marginBottom: 20, flexDirection: "row", justifyContent: "space-between" },
-    customerInfo: { flexDirection: "column" },
-    customerNameBold: { fontSize: 14, fontWeight: "bold", marginBottom: 2 },
-    metaText: { fontSize: 9, color: "#5e5e5e", marginBottom: 1 },
-    idBlock: { textAlign: "right" },
-    idLabel: { fontSize: 10, color: "#8c8c8c", textTransform: "uppercase" },
-    idValue: { fontSize: 20, fontWeight: "bold", letterSpacing: 1 },
-
-    table: { marginBottom: 20 },
-    tableHeader: { flexDirection: "row", backgroundColor: "#2b303a", color: "white", padding: 8 },
-    headerText: { fontSize: 9, fontWeight: "bold", textTransform: "uppercase" },
-    tableRow: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: "#f4f5f6", padding: 8 },
-    tableRowEven: { backgroundColor: "#fcfcfc" },
-    cellText: { fontSize: 9 },
-    cellSubText: { fontSize: 7, color: "#5e5e5e", marginTop: 1 },
-
-    bottomGrid: { flexDirection: "row", justifyContent: "space-between", marginBottom: 30 },
-    paymentBlock: { flexDirection: "column" },
-    paymentTitle: { fontSize: 9, fontWeight: "bold", marginBottom: 4, textTransform: "uppercase" },
-    paymentDetail: { fontSize: 8, color: "#5e5e5e", textTransform: "uppercase" },
-    totalsBlock: { width: 180 },
-    totalRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 4 },
-    totalLabel: { fontSize: 10, color: "#5e5e5e", textTransform: "uppercase" },
-    grandTotalRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 6, borderTopWidth: 1, borderTopColor: "#2b303a", paddingTop: 6 },
-    grandTotalText: { fontSize: 14, fontWeight: "bold" },
-
-    termsSection: { borderTopWidth: 1, borderTopColor: "#dbe1e8", paddingTop: 10 },
-    termsTitle: { fontSize: 9, fontWeight: "bold", marginBottom: 4, textTransform: "uppercase" },
-    termsText: { fontSize: 7, color: "#8c8c8c", lineHeight: 1.4 },
-
-    footerBar: { position: "absolute", bottom: 40, left: 40, right: 40, borderTopWidth: 1, borderTopColor: "#f4f5f6", paddingTop: 10, flexDirection: "row", justifyContent: "space-around" },
-    footerItem: { flexDirection: "row", alignItems: "center" },
-    footerIcon: { width: 12, height: 12, borderRadius: 6, backgroundColor: "#e11d48", color: "white", textAlign: "center", fontSize: 7, marginRight: 5, lineHeight: 1.5 },
-    footerText: { fontSize: 8, fontWeight: "bold" },
-    
-    bottomDecoration: { position: "absolute", bottom: 0, left: 0, right: 0, height: 30, backgroundColor: "#2b303a", flexDirection: "row" },
-    redAccent: { width: "30%", height: "100%", backgroundColor: "#e11d48" }
-  });
+  const pdfStyles = pdfStylesConst;
 
   const generatePDF = async (size: "A4" | "A5") => {
     if (cart.length === 0) {
@@ -111,7 +103,6 @@ export default function BillingTab() {
     setPdfLoading(true);
     try {
       const num = await claimInvoiceNumber();
-      setInvoiceNumber(num);
       const invLabel = num ? String(num).padStart(6, "0") : "000000";
 
       const subtotal = cart.reduce((sum, c) => sum + c.price * c.quantity, 0);
@@ -129,25 +120,26 @@ export default function BillingTab() {
               <View style={pdfStyles.brandBlock}>
                 <View style={pdfStyles.logoPlaceholder} />
                 <View style={pdfStyles.brandNameContainer}>
-                  <Text style={pdfStyles.brandNameMain}>Ronak Electricals</Text>
-                  <Text style={pdfStyles.brandNameSub}>Electrical Goods & Accessories</Text>
+                  <Text style={pdfStyles.brandNameMain}>{shopName}</Text>
+                  {shopPhone ? <Text style={{ fontSize: 8, color: "#6b6b68" }}>{shopPhone}</Text> : null}
+                  {shopAddress ? <Text style={{ fontSize: 8, color: "#6b6b68" }}>{shopAddress}</Text> : null}
                 </View>
               </View>
-              <Text style={pdfStyles.invoiceLabelLarge}>Invoice</Text>
+              <Text style={pdfStyles.invoiceLabelLarge}>INVOICE</Text>
             </View>
 
             {/* Meta */}
             <View style={pdfStyles.metaSection}>
               <View style={pdfStyles.customerInfo}>
-                <Text style={pdfStyles.customerNameBold}>{customerName || "Walking Customer"}</Text>
+                {customerName ? <Text style={pdfStyles.customerNameBold}>{customerName}</Text> : null}
                 <Text style={pdfStyles.metaText}>Date: {date}</Text>
                 {customerMobile && <Text style={pdfStyles.metaText}>Phone: +91 {customerMobile}</Text>}
-                <Text style={pdfStyles.metaText}>Address: Local Market, Main Road, City</Text>
               </View>
-              <View style={pdfStyles.idBlock}>
-                <Text style={pdfStyles.idLabel}>Invoice</Text>
-                <Text style={pdfStyles.idValue}>{invLabel}</Text>
-              </View>
+              {invoiceNumber && (
+                <View style={pdfStyles.idBlock}>
+                  <Text style={pdfStyles.idValue}>{invLabel}</Text>
+                </View>
+              )}
             </View>
 
             {/* Table */}
@@ -176,52 +168,26 @@ export default function BillingTab() {
               })}
             </View>
 
-            {/* Bottom */}
-            <View style={pdfStyles.bottomGrid}>
-              <View style={pdfStyles.paymentBlock}>
-                <Text style={pdfStyles.paymentTitle}>Payment Data:</Text>
-                <Text style={pdfStyles.paymentDetail}>Method: Cash / UPI</Text>
-                <Text style={pdfStyles.paymentDetail}>Status: Paid</Text>
+            {/* Totals */}
+            <View style={pdfStyles.totalsBlock}>
+              <View style={pdfStyles.totalRow}>
+                <Text style={pdfStyles.totalLabel}>Subtotal</Text>
+                <Text style={pdfStyles.cellText}>Rs. {subtotal.toFixed(2)}</Text>
               </View>
-              <View style={pdfStyles.totalsBlock}>
+              {totalDiscount > 0 && (
                 <View style={pdfStyles.totalRow}>
-                  <Text style={pdfStyles.totalLabel}>Subtotal</Text>
-                  <Text style={pdfStyles.cellText}>Rs. {subtotal.toFixed(2)}</Text>
+                  <Text style={pdfStyles.totalLabel}>Discount</Text>
+                  <Text style={pdfStyles.cellText}>- Rs. {totalDiscount.toFixed(2)}</Text>
                 </View>
-                {totalDiscount > 0 && (
-                  <View style={pdfStyles.totalRow}>
-                    <Text style={pdfStyles.totalLabel}>Discount</Text>
-                    <Text style={pdfStyles.cellText}>- Rs. {totalDiscount.toFixed(2)}</Text>
-                  </View>
-                )}
-                <View style={pdfStyles.grandTotalRow}>
-                  <Text style={[pdfStyles.totalLabel, { color: "#2b303a", fontWeight: "bold" }]}>Total</Text>
-                  <Text style={pdfStyles.grandTotalText}>Rs. {grandTotal.toFixed(2)}</Text>
-                </View>
+              )}
+              <View style={pdfStyles.grandTotalRow}>
+                <Text style={[pdfStyles.totalLabel, { fontWeight: "bold", color: "#1a1a18" }]}>Total</Text>
+                <Text style={pdfStyles.grandTotalText}>Rs. {grandTotal.toFixed(2)}</Text>
               </View>
-            </View>
-
-            {/* Terms */}
-            <View style={pdfStyles.termsSection}>
-              <Text style={pdfStyles.termsTitle}>Terms and Conditions</Text>
-              <Text style={pdfStyles.termsText}>
-                Goods once sold will not be taken back or exchanged. Warranty as per manufacturer terms.
-              </Text>
             </View>
 
             {/* Footer */}
-            <View style={pdfStyles.footerBar}>
-              <View style={pdfStyles.footerItem}>
-                <Text style={pdfStyles.footerText}>☏ +91-9876543210</Text>
-              </View>
-              <View style={pdfStyles.footerItem}>
-                <Text style={pdfStyles.footerText}>@ contact@ronakelectricals.com</Text>
-              </View>
-            </View>
-
-            <View style={pdfStyles.bottomDecoration}>
-              <View style={pdfStyles.redAccent} />
-            </View>
+            <Text style={pdfStyles.footerText}>Thank you for your purchase!</Text>
           </Page>
         </Document>
       );
@@ -240,6 +206,7 @@ export default function BillingTab() {
             filename,
             bytes: Array.from(uint8Array),
           });
+          setInvoiceNumber(num);
           showToast(`PDF saved to ${fullPath}`);
         } catch (e) {
           showToast(`Failed to save PDF: ${e}`, "error");
@@ -250,7 +217,8 @@ export default function BillingTab() {
         a.href = url;
         a.download = filename;
         a.click();
-        URL.revokeObjectURL(url);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        setInvoiceNumber(num);
         showToast(`PDF (${size}) downloaded`);
       }
     } catch (e) {
@@ -402,11 +370,11 @@ export default function BillingTab() {
     }
     try {
       const num = await claimInvoiceNumber();
-      setInvoiceNumber(num);
+      flushSync(() => setInvoiceNumber(num));
     } catch {
-      // proceed without number
+      flushSync(() => setInvoiceNumber(null));
     }
-    setTimeout(() => window.print(), 50);
+    window.print();
     showToast("Invoice sent to printer");
   };
   printRef.current = handlePrint;
@@ -831,13 +799,16 @@ export default function BillingTab() {
           globalDiscount={globalDiscount}
           getEffectiveDiscount={getEffectiveDiscount}
           invoiceNumber={invoiceNumber}
+          shopName={shopName}
+          shopPhone={shopPhone}
+          shopAddress={shopAddress}
           onClose={() => setPreviewOpen(false)}
           onPrint={() => { setPreviewOpen(false); handlePrint(); }}
         />
       )}
 
       {/* Invoice Preview (hidden by CSS, visible during print) */}
-      <InvoicePreview cart={cart} date={date} customerName={customerName} customerMobile={customerMobile} globalDiscount={globalDiscount} getEffectiveDiscount={getEffectiveDiscount} invoiceNumber={invoiceNumber} />
+      <InvoicePreview cart={cart} date={date} customerName={customerName} customerMobile={customerMobile} globalDiscount={globalDiscount} getEffectiveDiscount={getEffectiveDiscount} invoiceNumber={invoiceNumber} shopName={shopName} shopPhone={shopPhone} shopAddress={shopAddress} />
       </>
     </div>
   );
@@ -914,7 +885,7 @@ const cartHeader: React.CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  background: "#fcfcfc",
+  background: "var(--color-surface)",
   borderTopLeftRadius: "var(--radius-md)",
   borderTopRightRadius: "var(--radius-md)",
 };
@@ -931,7 +902,7 @@ const cartFooter: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
   gap: "var(--space-4)",
-  background: "#fcfcfc",
+  background: "var(--color-surface)",
   borderBottomLeftRadius: "var(--radius-md)",
   borderBottomRightRadius: "var(--radius-md)",
 };
@@ -1304,7 +1275,7 @@ const discountSection: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: "var(--space-4)",
-  background: "#fdfdfd",
+  background: "var(--color-surface)",
 };
 
 const discountLabel: React.CSSProperties = {

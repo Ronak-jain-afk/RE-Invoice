@@ -1,9 +1,10 @@
+# Dependencies
 node_modules
+
+# Build output
 dist
 dist-ssr
-*.local
-
-target/
+src-tauri/target
 
 # Rust/Cargo
 **/target/
@@ -35,3 +36,17 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 desktop.ini
+*:Zone.Identifier
+
+# Design assets (large, not needed for build)
+Icons/
+Skills/
+*.webp
+*.psd
+*.ai
+
+# Planning / docs (not part of source)
+UI_improvement.md
+Plan.md
+DEVELOPMENT-PLAN.md
+AGENTS.md
