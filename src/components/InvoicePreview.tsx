@@ -59,7 +59,7 @@ export default function InvoicePreview({
         <div className="brand-block">
           <div className="brand-logo-placeholder" />
           <div className="brand-name-container">
-            <span className="brand-name-main">{shopName || "Ronak Electricals"}</span>
+            <span className="brand-name-main">{shopName || ""}</span>
             {shopPhone && <span className="brand-detail">📞 {shopPhone}</span>}
             {shopAddress && <span className="brand-detail">📍 {shopAddress}</span>}
           </div>

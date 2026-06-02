@@ -141,7 +141,7 @@ export default function SettingsTab() {
             <div style={inputRow}>
               <input
                 type="text"
-                placeholder="/home/user/backups/ronak_backup.db"
+                placeholder="/home/user/backups/brand_backup.db"
                 value={backupPath}
                 onChange={(e) => setBackupPath(e.target.value)}
                 style={input}
@@ -165,7 +165,7 @@ export default function SettingsTab() {
             <div style={inputRow}>
               <input
                 type="text"
-                placeholder="/home/user/backups/ronak_backup.db"
+                placeholder="/home/user/backups/brand_backup.db"
                 value={restorePath}
                 onChange={(e) => setRestorePath(e.target.value)}
                 style={input}

@@ -1,6 +1,6 @@
-# Ronak Electricals — Billing & Inventory
+# RE-Invoice — Billing & Inventory
 
-Desktop app for inventory management, billing, and invoice generation at **Ronak Electricals**. Built with Tauri v2 + React 18.
+Desktop app for inventory management, billing, and invoice generation. Built with Tauri v2 + React 18.
 
 ## Tech
 

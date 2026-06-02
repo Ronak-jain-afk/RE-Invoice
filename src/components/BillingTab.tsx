@@ -67,7 +67,7 @@ export default function BillingTab() {
   const [invoiceNumber, setInvoiceNumber] = useState<number | null>(null);
 
   // Configurable shop details (read once, never re-written from this tab)
-  const [shopName] = useState(() => localStorage.getItem("shopName") || "Ronak Electricals");
+  const [shopName] = useState(() => localStorage.getItem("shopName") || "" );
   const [shopPhone] = useState(() => localStorage.getItem("shopPhone") || "");
   const [shopAddress] = useState(() => localStorage.getItem("shopAddress") || "");
 
@@ -193,7 +193,7 @@ export default function BillingTab() {
       );
 
       const blob = await pdf(<InvoicePDF />).toBlob();
-      const filename = `Invoice-Ronak-Electricals-${size}-${invLabel}.pdf`;
+      const filename = `Invoice-${size}-${invLabel}.pdf`;
       const saveDir = localStorage.getItem("pdfSavePath");
 
       if (saveDir && saveDir.trim().length > 0) {
