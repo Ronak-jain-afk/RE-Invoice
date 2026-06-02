@@ -1,6 +1,6 @@
 # RE-Invoice — Billing & Inventory
 
-Desktop app for inventory management, billing, and invoice generation. Built with Tauri v2 + React 18.
+Desktop app for inventory management, billing, and invoice generation. Built with Tauri v2 + React 18. — [Landing page](https://reinvoice-eight.vercel.app/)
 
 ## Tech
 
