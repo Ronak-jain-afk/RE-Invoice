@@ -9,7 +9,6 @@ export default function SettingsTab() {
   const [shopName, setShopName] = useState("");
   const [shopPhone, setShopPhone] = useState("");
   const [shopAddress, setShopAddress] = useState("");
-  const [pdfPath, setPdfPath] = useState("");
   const [backupPath, setBackupPath] = useState("");
   const [restorePath, setRestorePath] = useState("");
 
@@ -18,8 +17,6 @@ export default function SettingsTab() {
     if (savedTheme) {
       setTheme(savedTheme);
     }
-    const savedPdfPath = localStorage.getItem("pdfSavePath") || "";
-    setPdfPath(savedPdfPath);
     const savedShopName = localStorage.getItem("shopName") || "";
     setShopName(savedShopName);
     const savedShopPhone = localStorage.getItem("shopPhone") || "";
@@ -40,11 +37,6 @@ export default function SettingsTab() {
     localStorage.setItem("theme", newTheme);
     document.documentElement.setAttribute("data-theme", newTheme);
     showToast(`Switched to ${newTheme} mode`);
-  };
-
-  const handleSavePdfPath = () => {
-    localStorage.setItem("pdfSavePath", pdfPath);
-    showToast("PDF save location updated");
   };
 
   return (
@@ -107,25 +99,6 @@ export default function SettingsTab() {
               }}
             >
               Dark Mode
-            </button>
-          </div>
-        </div>
-
-        <div style={card}>
-          <h3 style={cardTitle}>PDF Export</h3>
-          <p style={description}>
-            Set a default directory to save invoices directly. Leave empty to use the standard download dialog.
-          </p>
-          <div style={inputRow}>
-            <input
-              type="text"
-              placeholder="C:\Users\Name\Desktop\Invoices"
-              value={pdfPath}
-              onChange={(e) => setPdfPath(e.target.value)}
-              style={input}
-            />
-            <button onClick={handleSavePdfPath} style={primaryButton}>
-              Save Path
             </button>
           </div>
         </div>

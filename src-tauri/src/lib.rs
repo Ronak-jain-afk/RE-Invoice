@@ -11,40 +11,6 @@ fn get_db_path(app: &tauri::AppHandle) -> PathBuf {
     app_data_dir.join("ronak_electricals.db")
 }
 
-fn wsl_path(dir: &str) -> PathBuf {
-    let dir = dir.trim();
-    let bytes = dir.as_bytes();
-    if bytes.len() >= 3
-        && bytes[0].is_ascii_alphabetic()
-        && bytes[1] == b':'
-        && (bytes[2] == b'\\' || bytes[2] == b'/')
-    {
-        let drive = bytes[0].to_ascii_lowercase() as char;
-        let rest = dir[2..].replace('\\', "/");
-        PathBuf::from(format!("/mnt/{}{}", drive, rest))
-    } else {
-        PathBuf::from(dir)
-    }
-}
-
-#[tauri::command]
-fn save_pdf(dir: String, filename: String, bytes: Vec<u8>) -> Result<String, String> {
-    let normalized_dir = wsl_path(&dir);
-    // Sanitize filename: strip path separators and parent-dir references
-    let safe_name: String = filename
-        .chars()
-        .filter(|&c| c.is_alphanumeric() || c == '-' || c == '_' || c == '.')
-        .collect();
-    let path = normalized_dir.join(&safe_name);
-
-    if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-    }
-
-    std::fs::write(&path, bytes).map_err(|e| e.to_string())?;
-    Ok(path.to_string_lossy().to_string())
-}
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -71,8 +37,7 @@ pub fn run() {
             db::suggest_item_bases,
             db::claim_invoice_number,
             db::backup_database,
-            db::restore_database,
-            save_pdf
+            db::restore_database
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

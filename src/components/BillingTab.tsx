@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { flushSync } from "react-dom";
-import { invoke } from "@tauri-apps/api/core";
 import { useItems, BrandVariant, SearchResult } from "../hooks/useItems";
 import { useCartContext, CartItem } from "../hooks/useCart";
 import { useDate } from "../hooks/useDate";
@@ -8,41 +7,6 @@ import { useToast } from "../hooks/useToast.tsx";
 import InvoicePreview from "./InvoicePreview";
 import InvoicePreviewModal from "./InvoicePreviewModal";
 import "../styles/InvoicePreview.css";
-import { pdf } from "@react-pdf/renderer";
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
-
-const pdfStylesConst = StyleSheet.create({
-  page: { padding: 20, fontFamily: "Helvetica", backgroundColor: "white", color: "#1a1a18" },
-  topSection: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 14 },
-  brandBlock: { flexDirection: "row", alignItems: "center", gap: 6 },
-  logoPlaceholder: { width: 24, height: 24, backgroundColor: "#1a3c5e", marginRight: 6 },
-  brandNameContainer: { flexDirection: "column" },
-  brandNameMain: { fontSize: 14, fontWeight: "bold", textTransform: "uppercase" },
-  invoiceLabelLarge: { fontSize: 18, fontWeight: "bold", letterSpacing: 1 },
-
-  metaSection: { borderTopWidth: 1, borderTopColor: "#dbe1e8", paddingTop: 8, marginBottom: 10, flexDirection: "row", justifyContent: "space-between" },
-  customerInfo: { flexDirection: "column" },
-  customerNameBold: { fontSize: 12, fontWeight: "bold", marginBottom: 1 },
-  metaText: { fontSize: 9, color: "#6b6b68", marginBottom: 1 },
-  idBlock: { textAlign: "right" },
-  idValue: { fontSize: 14, fontWeight: "bold", letterSpacing: 1 },
-
-  table: { marginBottom: 10 },
-  tableHeader: { flexDirection: "row", backgroundColor: "#1a3c5e", padding: 6 },
-  headerText: { fontSize: 8, fontWeight: "bold", color: "white", textTransform: "uppercase" },
-  tableRow: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: "#e2e0db", padding: 6 },
-  tableRowEven: { backgroundColor: "#f8f8f6" },
-  cellText: { fontSize: 9 },
-  cellSubText: { fontSize: 7, color: "#6b6b68", marginTop: 1 },
-
-  totalsBlock: { width: 180, marginLeft: "auto" },
-  totalRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 2 },
-  totalLabel: { fontSize: 9, color: "#6b6b68", textTransform: "uppercase" },
-  grandTotalRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 4, borderTopWidth: 1, borderTopColor: "#1a1a18", paddingTop: 4 },
-  grandTotalText: { fontSize: 14, fontWeight: "bold" },
-
-  footerText: { textAlign: "center", fontSize: 9, color: "#6b6b68", marginTop: "auto", paddingTop: 6, borderTopWidth: 1, borderTopColor: "#e2e0db" },
-});
 
 export default function BillingTab() {
   const { searchItems, getProductDetails, claimInvoiceNumber } = useItems();
@@ -56,9 +20,6 @@ export default function BillingTab() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState(-1);
-
-  // PDF generation
-  const [pdfLoading, setPdfLoading] = useState(false);
 
   // Preview modal
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -92,141 +53,6 @@ export default function BillingTab() {
   const [changeProductDetails, setChangeProductDetails] = useState<BrandVariant[]>([]);
   const [changeBrandVariantId, setChangeBrandVariantId] = useState<number | null>(null);
   const [changeSubModelNewId, setChangeSubModelNewId] = useState<number | null>(null);
-
-  const pdfStyles = pdfStylesConst;
-
-  const generatePDF = async (size: "A4" | "A5") => {
-    if (cart.length === 0) {
-      showToast("Cart is empty", "error");
-      return;
-    }
-    setPdfLoading(true);
-    try {
-      const num = await claimInvoiceNumber();
-      const invLabel = num ? String(num).padStart(6, "0") : "000000";
-
-      const subtotal = cart.reduce((sum, c) => sum + c.price * c.quantity, 0);
-      const totalDiscount = cart.reduce((sum, c) => {
-        const d = getEffectiveDiscount(c);
-        return sum + (c.price * d / 100) * c.quantity;
-      }, 0);
-      const grandTotal = subtotal - totalDiscount;
-
-      const InvoicePDF = () => (
-        <Document>
-          <Page size={size} style={pdfStyles.page}>
-            {/* Header */}
-            <View style={pdfStyles.topSection}>
-              <View style={pdfStyles.brandBlock}>
-                <View style={pdfStyles.logoPlaceholder} />
-                <View style={pdfStyles.brandNameContainer}>
-                  <Text style={pdfStyles.brandNameMain}>{shopName}</Text>
-                  {shopPhone ? <Text style={{ fontSize: 8, color: "#6b6b68" }}>{shopPhone}</Text> : null}
-                  {shopAddress ? <Text style={{ fontSize: 8, color: "#6b6b68" }}>{shopAddress}</Text> : null}
-                </View>
-              </View>
-              <Text style={pdfStyles.invoiceLabelLarge}>INVOICE</Text>
-            </View>
-
-            {/* Meta */}
-            <View style={pdfStyles.metaSection}>
-              <View style={pdfStyles.customerInfo}>
-                {customerName ? <Text style={pdfStyles.customerNameBold}>{customerName}</Text> : null}
-                <Text style={pdfStyles.metaText}>Date: {date}</Text>
-                {customerMobile && <Text style={pdfStyles.metaText}>Phone: +91 {customerMobile}</Text>}
-              </View>
-              {invoiceNumber && (
-                <View style={pdfStyles.idBlock}>
-                  <Text style={pdfStyles.idValue}>{invLabel}</Text>
-                </View>
-              )}
-            </View>
-
-            {/* Table */}
-            <View style={pdfStyles.table}>
-              <View style={pdfStyles.tableHeader}>
-                <Text style={[pdfStyles.headerText, { width: "40%" }]}>Product</Text>
-                <Text style={[pdfStyles.headerText, { width: "20%", textAlign: "center" }]}>Price</Text>
-                <Text style={[pdfStyles.headerText, { width: "15%", textAlign: "center" }]}>Qty</Text>
-                <Text style={[pdfStyles.headerText, { width: "25%", textAlign: "right" }]}>Total</Text>
-              </View>
-              {cart.map((c, idx) => {
-                const discount = getEffectiveDiscount(c);
-                const finalPrice = c.price * (1 - discount / 100);
-                const total = finalPrice * c.quantity;
-                return (
-                  <View key={c.sub_model_id} style={[pdfStyles.tableRow, idx % 2 === 1 ? pdfStyles.tableRowEven : {}]}>
-                    <View style={{ width: "40%" }}>
-                      <Text style={[pdfStyles.cellText, { fontWeight: "bold" }]}>{c.base_name}</Text>
-                      <Text style={pdfStyles.cellSubText}>{c.brand_name} / {c.sub_model_name}</Text>
-                    </View>
-                    <Text style={[pdfStyles.cellText, { width: "20%", textAlign: "center" }]}>Rs. {c.price.toFixed(2)}</Text>
-                    <Text style={[pdfStyles.cellText, { width: "15%", textAlign: "center" }]}>{c.quantity}</Text>
-                    <Text style={[pdfStyles.cellText, { width: "25%", textAlign: "right" }]}>Rs. {total.toFixed(2)}</Text>
-                  </View>
-                );
-              })}
-            </View>
-
-            {/* Totals */}
-            <View style={pdfStyles.totalsBlock}>
-              <View style={pdfStyles.totalRow}>
-                <Text style={pdfStyles.totalLabel}>Subtotal</Text>
-                <Text style={pdfStyles.cellText}>Rs. {subtotal.toFixed(2)}</Text>
-              </View>
-              {totalDiscount > 0 && (
-                <View style={pdfStyles.totalRow}>
-                  <Text style={pdfStyles.totalLabel}>Discount</Text>
-                  <Text style={pdfStyles.cellText}>- Rs. {totalDiscount.toFixed(2)}</Text>
-                </View>
-              )}
-              <View style={pdfStyles.grandTotalRow}>
-                <Text style={[pdfStyles.totalLabel, { fontWeight: "bold", color: "#1a1a18" }]}>Total</Text>
-                <Text style={pdfStyles.grandTotalText}>Rs. {grandTotal.toFixed(2)}</Text>
-              </View>
-            </View>
-
-            {/* Footer */}
-            <Text style={pdfStyles.footerText}>Thank you for your purchase!</Text>
-          </Page>
-        </Document>
-      );
-
-      const blob = await pdf(<InvoicePDF />).toBlob();
-      const filename = `Invoice-${size}-${invLabel}.pdf`;
-      const saveDir = localStorage.getItem("pdfSavePath");
-
-      if (saveDir && saveDir.trim().length > 0) {
-        const buffer = await blob.arrayBuffer();
-        const uint8Array = new Uint8Array(buffer);
-
-        try {
-          const fullPath = await invoke<string>("save_pdf", {
-            dir: saveDir.trim(),
-            filename,
-            bytes: Array.from(uint8Array),
-          });
-          setInvoiceNumber(num);
-          showToast(`PDF saved to ${fullPath}`);
-        } catch (e) {
-          showToast(`Failed to save PDF: ${e}`, "error");
-        }
-      } else {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
-        setInvoiceNumber(num);
-        showToast(`PDF (${size}) downloaded`);
-      }
-    } catch (e) {
-      showToast(`PDF generation failed: ${e}`, "error");
-    } finally {
-      setPdfLoading(false);
-    }
-  };
 
   const searchRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<number | null>(null);
@@ -774,12 +600,6 @@ export default function BillingTab() {
                 <div style={actionsRow}>
                   <button onClick={() => setPreviewOpen(true)} disabled={cart.length === 0} style={actionButtonSecondary}>
                     Preview
-                  </button>
-                  <button onClick={() => generatePDF("A4")} disabled={cart.length === 0 || pdfLoading} style={actionButtonSecondary}>
-                    {pdfLoading ? "Wait..." : "PDF (A4)"}
-                  </button>
-                  <button onClick={() => generatePDF("A5")} disabled={cart.length === 0 || pdfLoading} style={actionButtonSecondary}>
-                    PDF (A5)
                   </button>
                 </div>
               </div>

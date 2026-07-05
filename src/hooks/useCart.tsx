@@ -41,13 +41,7 @@ function loadSnapshot(): CartSnapshot | null {
   try {
     const saved = localStorage.getItem(CART_STORAGE_KEY);
     if (!saved) return null;
-    const snapshot = JSON.parse(saved) as CartSnapshot;
-    // Migrate old snapshots that lack original_price
-    snapshot.cart = snapshot.cart.map((c) => ({
-      ...c,
-      original_price: c.original_price ?? c.price,
-    }));
-    return snapshot;
+    return JSON.parse(saved) as CartSnapshot;
   } catch {
     return null;
   }
@@ -64,13 +58,7 @@ function saveSnapshot(cart: CartItem[], globalDiscount: number) {
   }
 }
 
-function clearSnapshot() {
-  try {
-    localStorage.removeItem(CART_STORAGE_KEY);
-  } catch {
-    // silently ignore
-  }
-}
+
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>(() => {
@@ -145,7 +133,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const clearCart = useCallback(() => {
     setCart([]);
     setGlobalDiscount(0);
-    clearSnapshot();
+    try { localStorage.removeItem(CART_STORAGE_KEY); } catch {}
   }, []);
 
   const getEffectiveDiscount = useCallback(
